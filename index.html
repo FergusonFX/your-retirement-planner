@@ -1,0 +1,2085 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirement Planner</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --surface-2:#f0efeb; --border:#dedcd5;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7873;
+  --accent:#2a78d6; --accent-ink:#ffffff;
+  --band-outer:#cde2fb; --band-inner:#86b6ef; --line:#1c5cab;
+  --s1:#2a78d6; --s2:#eb6834;
+  --good:#1a7f37; --warn:#b26b00; --bad:#c4312f;
+  --grid:#e7e5df;
+  --c-trad:#2a78d6; --c-roth:#eb6834; --c-brok:#1baf7a; --c-cash:#eda100; --c-5:#e87ba4; --c-6:#8a63d2; --c-7:#2aa5b8; --c-8:#9c7a4a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#34332f;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8d86;
+    --accent:#3987e5; --accent-ink:#ffffff;
+    --band-outer:#183a63; --band-inner:#256abf; --line:#86b6ef;
+    --s1:#3987e5; --s2:#d95926;
+    --good:#3fb950; --warn:#d29922; --bad:#f06a68;
+    --grid:#2a2a28;
+    --c-trad:#3987e5; --c-roth:#d95926; --c-brok:#199e70; --c-cash:#c98500; --c-5:#d55181; --c-6:#9d7ce0; --c-7:#35b3c6; --c-8:#b08d5b;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#34332f;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8d86;
+  --accent:#3987e5; --accent-ink:#ffffff;
+  --band-outer:#183a63; --band-inner:#256abf; --line:#86b6ef;
+  --s1:#3987e5; --s2:#d95926;
+  --good:#3fb950; --warn:#d29922; --bad:#f06a68;
+  --grid:#2a2a28;
+  --c-trad:#3987e5; --c-roth:#d95926; --c-brok:#199e70; --c-cash:#c98500; --c-5:#d55181; --c-6:#9d7ce0; --c-7:#35b3c6; --c-8:#b08d5b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:12px 16px 4px;max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.ttl{display:flex;align-items:baseline;column-gap:14px;flex-wrap:wrap;min-width:0}
+h1{font-size:22px;margin:0}
+.sub{color:var(--text-2);margin:0}
+main{max-width:1100px;margin:0 auto;padding:14px 16px 40px}
+.page{display:none;min-width:0}
+.page.on{display:block}
+.page details.card>summary{cursor:default;pointer-events:none}
+.page details.card>summary::after,.page details.card[open]>summary::after{content:none}
+.page details.card>summary .sumval{margin-right:0}
+.chartgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px;margin-bottom:14px}
+.chartgrid>.card{margin-bottom:0}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border)}
+.navin{max-width:1100px;margin:0 auto;padding:4px 16px 8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.navin::-webkit-scrollbar{display:none}
+.ptab{font:inherit;font-size:14px;color:var(--text-2);background:none;border:1px solid transparent;border-radius:8px;padding:7px 12px;white-space:nowrap;cursor:pointer}
+.ptab:hover{color:var(--text);background:var(--surface-2)}
+.ptab[aria-selected="true"]{color:var(--text);background:var(--surface);border-color:var(--border);font-weight:600}
+.navpct{margin-left:auto;font:inherit;font-size:15px;font-weight:700;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.navpct .dot{margin:0}
+.navpct{flex-direction:column;gap:0;border-radius:10px;padding:4px 12px;line-height:1.15;flex:none}
+.navpct small{text-align:center;line-height:1.1}
+.navpct .np{display:flex;align-items:center;gap:6px}
+.navpct small{font-size:10.5px;font-weight:500;color:var(--muted)}
+@media (max-width:700px){.sub{display:none} .navin{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+details.card{padding:0}
+details.card>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"+";color:var(--muted);font-weight:400;font-size:18px}
+details.card[open]>summary::after{content:"–"}
+details.card>.body{padding:0 16px 14px}
+.sumval{color:var(--text-2);font-weight:400;font-size:13px;margin-left:auto;margin-right:10px}
+h2{font-size:16px;margin:0 0 10px}
+h3{font-size:14px;margin:14px 0 6px;color:var(--text-2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 10px}
+label.f{display:flex;flex-direction:column;font-size:12px;color:var(--text-2);gap:3px}
+div.f{display:flex;flex-direction:column;font-size:12px;color:var(--text-2);gap:3px}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.stack .optchk{margin-top:0}
+.sphead{display:block;cursor:pointer;white-space:nowrap}
+.sphead input{margin:0 4px 0 0;width:12px;height:12px;vertical-align:-1px}
+body.nosp .spopt{display:none !important}
+.inrow{display:flex;align-items:center;gap:12px}
+.inrow input.money{flex:1;min-width:0}
+.chkin{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);white-space:nowrap;cursor:pointer}
+.chkin input{margin:0}
+.optchk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);margin-top:14px;cursor:pointer}
+.optchk input{margin:0;flex:none}
+.optbody{margin:8px 0 0 24px}
+input,select{font:inherit;font-size:14px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+input[type=checkbox]{width:auto}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.note a{color:var(--accent);font-weight:600}
+table{border-collapse:collapse;width:100%}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;text-align:left;padding:4px 4px;border-bottom:1px solid var(--border)}
+.tbl td{padding:3px 4px;border-bottom:1px solid var(--grid);font-size:13px;vertical-align:middle}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl input,.tbl select{padding:3px 5px;font-size:13px}
+.scroll{overflow-x:auto}
+#yearTbl{width:100%}
+#wdTbl{width:100%}
+#wdTbl th,#wdTbl td{padding:6px 8px}
+#wdTbl td.cell{text-align:right;white-space:nowrap}
+#wdTbl td.cell input{width:58px;text-align:right;margin-right:4px}
+#wdTbl td.cell .amt{display:block;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+#rebalTbl tr.tot td{font-weight:600;border-top:2px solid var(--border);border-bottom:0}
+#rebalTbl td{white-space:nowrap}
+.pieLeg input.pctIn{width:58px;text-align:right;padding:3px 6px;font-size:13px}
+.pieLeg tr.tot td.off{color:var(--bad)}
+#rebalTbl small{display:block;color:var(--muted);font-size:11px}
+#rebalTbl .sell{color:var(--bad);font-weight:600}
+#rebalTbl .buy{color:var(--good);font-weight:600}
+#rebalMoves ul{margin:6px 0 0;padding-left:20px}
+#rebalMoves li{margin:3px 0}
+#wdTbl tr.tot td{font-weight:600;border-top:2px solid var(--border);border-bottom:0}
+#wdTbl .nom,#wdRefill .nom{font-weight:400;color:var(--muted)}
+#wdTbl td.cell .nom{display:block;font-size:12px}
+#wdTbl th small,#yearTbl th small{display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
+#yearTbl th,#yearTbl td{padding:7px 6px}
+#yearTbl th{white-space:normal;vertical-align:bottom;line-height:1.25}
+#yearTbl td{white-space:nowrap}
+#budTbl td,#budTbl th{padding-left:3px;padding-right:3px}
+#budTbl td:nth-child(5) input,#budTbl td:nth-child(6) input{width:52px!important}
+#budTbl td.drag{cursor:grab;color:var(--muted);font-size:16px;line-height:1;padding:0 2px;user-select:none;width:14px}
+#budTbl td.drag:hover{color:var(--text)}
+#budTbl tr.dragging{opacity:.4}
+#budTbl tr.drop-before td{box-shadow:inset 0 2px 0 var(--accent)}
+#budTbl tr.drop-after td{box-shadow:inset 0 -2px 0 var(--accent)}
+#budTbl tr.drop-into td{background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent)}
+#budTbl td.fixnote{font-size:12px;color:var(--muted);padding:0 4px 8px;border-bottom:1px solid var(--grid)}
+#budTbl tr:has(+ tr > td.fixnote) td{border-bottom:none}
+#budTbl th{white-space:normal;line-height:1.2;vertical-align:bottom}
+input.ro{background:transparent;border-style:dashed;color:var(--text);font-weight:600;cursor:default}
+input.ro:focus{outline:none}
+input.linked{color:var(--accent);font-weight:600;border-color:var(--accent)}
+#acctTbl select{min-width:112px}
+.btn{font:inherit;font-size:13px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:6px;padding:6px 10px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px}
+.x:hover{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(250px,330px);gap:18px;align-items:center}
+.heroMix{border-left:1px solid var(--grid);padding-left:18px}
+.heroMix h3{margin-top:0}
+@media (max-width:900px){.hero{grid-template-columns:auto minmax(0,1fr)} .heroMix{grid-column:1/-1;border-left:0;padding-left:0;border-top:1px solid var(--grid);padding-top:12px}}
+@media (max-width:560px){.hero{grid-template-columns:1fr}}
+.big{font-size:56px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:24px}
+.status{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:14px;margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.stat .k{font-size:12px;color:var(--text-2)}
+.stat .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-size:13px}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;display:none;z-index:5}
+.tip b{font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin:4px 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.tabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:3px;width:max-content;margin-bottom:10px}
+.tab{font:inherit;font-size:13px;border:0;background:transparent;color:var(--text-2);padding:5px 12px;border-radius:6px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.pieWrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap;position:relative}
+.pieWrap svg{width:220px;height:220px;flex:none}
+.pieWrap path{cursor:default;transition:opacity .15s}
+.pieWrap.hl path:not(.on){opacity:.35}
+.pieLeg{flex:1;min-width:200px;border-collapse:collapse;font-size:13px}
+.pieLeg td{padding:6px 4px;border-bottom:1px solid var(--grid)}
+.pieLeg td.num{text-align:right;font-variant-numeric:tabular-nums}
+.pieLeg tr.tot td{border-bottom:0;font-weight:600}
+.namesGrid{max-width:560px}
+.taxopts{display:flex;flex-direction:column;gap:10px}
+table.brk{width:auto;border-collapse:collapse;font-size:13px}
+table.brk th,table.brk td{padding:3px 6px;text-align:right;white-space:nowrap}
+table.brk th{font-weight:600;color:var(--text-2);font-size:12px;border-bottom:1px solid var(--border)}
+table.brk th:first-child,table.brk td:first-child{text-align:left}
+table.brk tr.sec td{padding-top:12px;font-weight:600;color:var(--text-2);font-size:12px;text-align:left}
+table.brk input{width:110px;text-align:right;padding:3px 6px}
+table.brk input.rate{width:56px}
+table.brk .used{background:color-mix(in srgb, var(--accent) 9%, transparent)}
+table.brk .from{color:var(--text-2)}
+.taxopt{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:14px;line-height:1.4}
+.taxopt input[type=checkbox]{flex:none;margin:0 4px 0 0}
+.taxopt label{cursor:pointer}
+.taxopt .inl{width:auto;min-width:0;padding:3px 6px}
+.taxopt input.inl{width:64px;text-align:right}
+.namesGrid .nmrow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.namesGrid .nmrow .sw{flex:none}
+.namesGrid .nmrow input{flex:1;min-width:0}
+.namesGrid .nmrow select{width:auto;flex:none}
+.namesGrid .nmrow .x{flex:none}
+.pieLeg th{font-size:11px;font-weight:500;color:var(--muted);text-align:right;padding:4px;border-bottom:1px solid var(--grid);white-space:nowrap}
+.pieLeg th:first-child{text-align:left}
+.pieLeg.wide td.num{white-space:nowrap}
+#holdTbl select.htype{width:auto;margin:4px 0 0;font-weight:400}
+#holdTbl .hgrpname{display:flex;flex-direction:column;align-items:flex-start}
+#holdTbl .hgrpname .hacct{font-weight:600}
+#holdTbl .hgrpname .htype{font-size:12px;font-weight:400;color:var(--text-2);margin-top:2px}
+#holdTbl .hgrpname select.hlink{width:auto;margin:4px 0 0;font-weight:400}
+#holdTbl .hgrpname input.hacct{width:100%;max-width:320px}
+#holdTbl{width:100%}
+#holdTbl td{padding:5px 8px}
+#holdTbl input.hacct{font-weight:600;border-color:transparent;background:transparent;padding-left:0}
+#holdTbl input.hacct:hover,#holdTbl input.hacct:focus{border-color:var(--border);background:var(--surface-2);padding-left:7px}
+#holdTbl input.money{width:110px}
+#holdTbl select{width:auto;min-width:118px}
+#holdTbl tr.hgrp td{font-weight:600;padding-top:12px;border-bottom:1px solid var(--border)}
+#holdTbl tr.hgrp td.num{color:var(--text-2)}
+#holdTbl tr.htot td{font-weight:700;border-top:2px solid var(--border);border-bottom:0;padding-top:10px}
+.budinfl{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:4px 0 10px}
+.budinfl input{width:60px;text-align:right;padding:3px 6px}
+.budinfl .btn{padding:3px 10px}
+.budinfl .sub{flex-basis:100%;font-size:12px;color:var(--text-2)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline}
+.warnbox{background:var(--surface-2);border-left:3px solid var(--warn);padding:6px 10px;font-size:13px;border-radius:4px;margin-top:8px}
+.totals{display:flex;justify-content:space-between;font-weight:600;font-size:13px;padding:6px 4px 0}
+footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="topbar">
+<header>
+  <div class="ttl"><h1>Retirement Planner</h1>
+  <p class="sub">all amounts in today's dollars · results update as you type</p></div>
+  <button class="navpct" id="navPct" title="Monte Carlo success rate: click to see the results"><span class="np"><i class="dot"></i><span>–</span></span><small>Monte Carlo<br>success</small></button>
+</header>
+<nav class="tabsbar"><div class="navin" role="tablist">
+  <button class="ptab" role="tab" data-page="ages" aria-selected="false">Ages, Timing and Taxes</button>
+  <button class="ptab" role="tab" data-page="mc" aria-selected="false">Monte Carlo</button>
+  <button class="ptab" role="tab" data-page="money" aria-selected="false">Your Money</button>
+  <button class="ptab" role="tab" data-page="other" aria-selected="false">Other Income</button>
+  <button class="ptab" role="tab" data-page="ss" aria-selected="false">Social Security</button>
+  <button class="ptab" role="tab" data-page="spending" aria-selected="false">Your Spending</button>
+  <button class="ptab" role="tab" data-page="year" aria-selected="false">Year By Year</button>
+  <button class="ptab" role="tab" data-page="roth" aria-selected="false">Roth Conversions</button>
+  <button class="ptab" role="tab" data-page="market" aria-selected="false">Market Assumptions</button>
+</div></nav>
+</div>
+<main>
+<section class="page" id="page-ages">
+  <details class="card" open>
+    <summary>Ages and timing</summary>
+    <div class="body">
+      <div class="grid2" style="align-items:start">
+        <div class="stack">
+          <label class="f">Your age today<input id="currentAge" type="number" min="30" max="90"></label>
+          <label class="f">How much you save per year until retirement<input id="pSave" class="money"></label>
+          <label class="f">You retire at age<input id="retireAge" type="number" min="30" max="90"></label>
+          <label class="f">Plan runs through age (your age)<input id="endAge" type="number" min="60" max="110"></label>
+        </div>
+        <div class="stack">
+          <div class="f"><label class="sphead"><input type="checkbox" id="spOn"> <span>Spouse</span><span class="spopt">'s age today</span></label>
+            <input id="jessAge" class="spopt" type="number" min="30" max="90" aria-label="Spouse's age today"></div>
+          <label class="f spopt">How much your spouse saves per year until retirement<input id="jSave" class="money"></label>
+          <p class="note spopt" style="margin:0">With a spouse, taxes use married-filing-jointly brackets, and the spouse's Social Security is added. Without one, single-filer brackets.</p>
+        </div>
+      </div>
+      <p class="note" id="ageNote"></p>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary>Taxes <span class="sumval" id="sumTax"></span></summary>
+    <div class="body">
+      <div class="taxopts">
+        <div class="taxopt"><input type="checkbox" id="tx1"><label for="tx1"><b>Flat tax:</b> add</label><input id="taxPct" type="number" min="0" max="60" step="0.5" class="inl" aria-label="Flat tax percent"><label for="tx1">% to all spending</label></div>
+        <div class="taxopt"><input type="checkbox" id="tx2"><label for="tx2"><b>Standard order:</b> take from Brokerage first, then Tax Deferred, with Roth last</label></div>
+        <div class="taxopt"><input type="checkbox" id="tx3"><label for="tx3"><b>Fill the bracket order:</b> take from Tax Deferred first, up to the top of the</label><select id="txFill" class="inl" aria-label="Bracket to fill"><option value="12">12%</option><option value="22">22%</option></select><label for="tx3">bracket, then Brokerage, with Roth last</label></div>
+      </div>
+      <div class="grid3" style="margin-top:14px;align-items:end">
+        <label class="f" title="The share of each Brokerage withdrawal that's growth, taxed at capital gains rates. The rest is money you put in, which isn't taxed.">Brokerage gains (% of a withdrawal)<input id="txGains" type="number" min="0" max="100" step="5"></label>
+        <label class="f" title="Applied to taxable income. Used by Standard order, Fill the bracket order and the Roth Conversions page.">State income tax %<input id="rcState" type="number" step="0.1" min="0" max="15"></label>
+      </div>
+      <p class="note" id="taxNote"></p>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary>Tax Brackets <span class="sumval" id="sumBrk"></span></summary>
+    <div class="body">
+      <div class="row" style="align-items:end;gap:12px;margin-bottom:10px">
+        <label class="f" style="width:110px">Tax year<input id="brkYear" type="number" min="2020" max="2100"></label>
+        <button class="btn" id="brkReset" type="button">Reset to 2026 IRS numbers</button>
+      </div>
+      <div style="overflow-x:auto"><table id="brkTbl" class="brk"></table></div>
+      <p class="note" id="brkNote"></p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-mc">
+  <div class="card">
+    <div class="hero">
+      <div>
+        <div class="big" id="pct">–</div>
+        <div class="status" id="statusLine"></div>
+      </div>
+      <div>
+        <div style="font-weight:600" id="heroText"></div>
+        <p class="note" id="heroSub" style="margin-top:4px"></p>
+        <div class="row" style="margin-top:8px"><button class="btn primary" id="rerun">Run again with new random markets</button></div>
+      </div>
+      <div class="heroMix">
+        <h3>Investment mix used in the Monte Carlo</h3>
+        <div class="grid3">
+          <label class="f">Stocks %<input id="aStocks" type="number" min="0" max="100"></label>
+          <label class="f">Bonds %<input id="aBonds" type="number" min="0" max="100"></label>
+          <label class="f">Cash %<input id="aCash" type="number" min="0" max="100"></label>
+        </div>
+        <div id="allocWarn"></div>
+        <p class="note">Your overall split across all accounts. Rebalanced back to this mix every year.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="guardCard" style="display:none">
+    <h2>Spending guardrails</h2>
+    <div class="stats" id="guardStats"></div>
+    <p class="note" id="guardNote"></p>
+  </div>
+
+  <div class="card">
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="chartgrid">
+  <div class="card">
+    <h2>Portfolio balance over time</h2>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--band-outer)"></i>80% of outcomes (10th–90th)</span>
+      <span><i class="sw" style="background:var(--band-inner)"></i>Middle half (25th–75th)</span>
+      <span><i class="sw" style="background:var(--line);height:3px"></i>Typical (median)</span>
+    </div>
+    <div class="chart" id="fanChart"></div>
+  </div>
+  <div class="card">
+    <h2>Chance the money is still there, by age</h2>
+    <div class="chart" id="survChart"></div>
+  </div>
+  <div class="card">
+    <h2>Spending vs. income each year</h2>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--s2)"></i>Spending incl. tax</span>
+      <span><i class="sw" style="background:var(--s1)"></i>Social Security + other income</span>
+    </div>
+    <div class="chart" id="flowChart"></div>
+    <p class="note">The gap between the lines is what comes out of savings each year.</p>
+  </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="btn" id="exportBtn">Save a copy (.json)</button>
+      <button class="btn" id="importBtn">Load a copy</button>
+      <button class="btn" id="resetBtn">Reset to blank</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    </div>
+    <p class="note">Your changes are saved automatically in this browser.</p>
+  </div>
+</section>
+<section class="page" id="page-money">
+  <details class="card" open>
+    <summary>Accounts <span class="sumval" id="sumMoney"></span></summary>
+    <div class="body">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabList" aria-selected="true">Accounts</button>
+        <button class="tab" role="tab" id="tabPie" aria-selected="false">By account type</button>
+      </div>
+      <div id="moneyList">
+        <div class="scroll"><table class="tbl" id="acctTbl">
+          <thead><tr><th>Account</th><th>Type</th><th class="num">Balance</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="row" style="margin-top:6px"><button class="btn" id="addAcct">+ Add account</button></div>
+        <div id="bucketTotals" class="note"></div>
+      </div>
+      <div id="moneyPie" style="display:none"><div class="pieWrap" id="pieWrap"></div></div>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary>Holdings <span class="sumval" id="sumHold"></span></summary>
+    <div class="body">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabHoldList" aria-selected="true">Holdings list</button>
+        <button class="tab" role="tab" id="tabHoldPie" aria-selected="false">By group</button>
+      </div>
+      <div id="holdList">
+      <div class="scroll"><table class="tbl" id="holdTbl">
+        <thead><tr><th>Account</th><th>Ticker</th><th>Group</th><th class="num">Amount</th><th></th></tr></thead><tbody></tbody>
+      </table></div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addHold">+ Add holding</button><label class="row" style="gap:6px;font-size:13px;color:var(--text-2)">to <select id="holdAcct" style="width:auto"></select></label></div>
+      <p class="note">List what each account holds. Hover a ticker for the fund's name (when known). Change any amount or ticker, pick a group, click × to remove a holding, or use + Add holding. Account names and types come from the Accounts box above, so change them there. Add accounts there too. Your edits are saved in this browser. This list is for reference only and doesn't feed the Monte Carlo, which uses the balances in Your money.</p>
+      </div>
+      <div id="holdPie" style="display:none">
+        <h3 style="margin-top:0">Today</h3>
+        <div class="pieWrap" id="holdPieWrap"></div>
+        <p class="note">Set each holding's group in the Holdings list tab and the chart updates. The account type columns use each account's type from the Accounts box.</p>
+        <h3 style="margin-top:22px">Target at retirement</h3>
+        <div class="pieWrap" id="holdTargetWrap"></div>
+        <div id="tgtWarn"></div>
+        <p class="note" id="holdTargetNote"></p>
+        <h3 style="margin-top:22px">Rebalance to target</h3>
+        <div class="scroll"><table class="tbl" id="rebalTbl"></table></div>
+        <div id="rebalMoves" style="font-size:14px;margin-top:10px"></div>
+        <p class="note">Uses today's total and the target percentages in the Target chart above. Changes smaller than 1% of the total are left alone. Selling inside Tax Deferred and Roth accounts doesn't trigger taxes, so make moves there when you can. Selling in a Brokerage account can create capital gains tax. You don't have to do it all at once: many people rebalance once a year, or move toward the target as retirement gets closer.</p>
+      </div>
+    </div>
+  </details>
+
+
+  <details class="card" open>
+    <summary>Holding groups</summary>
+    <div class="body">
+      <p class="note" style="margin-top:0">Rename, add or remove holding groups, for example add an International group. Changes show up in every dropdown, pie chart and table. Clear a name to go back to the original (shown in gray).</p>
+      <div class="namesGrid">
+        <div><div id="groupNames"></div></div>
+      </div>
+      <p class="note">Each group's kind (Stocks, Bonds or Cash) decides how it's used: Bonds and Cash groups are the safe money counted in the Up-year refill and left out of the sector chart. Removing a group moves its holdings, target % and withdrawal plan % into another group of the same kind (or the first group).</p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-other">
+  <details class="card" open>
+    <summary>Rental, Home and Other Income <span class="sumval" id="sumOther"></span></summary>
+    <div class="body">
+      <h3 style="margin-top:0">Rental 01</h3>
+      <div class="grid2">
+        <label class="f" title="What the property is worth minus what you still owe on it">Property equity<input id="rValue" class="money"></label>
+        <div class="f"><label for="rIncome">Net rental income per year</label>
+          <div class="inrow"><input id="rIncome" class="money"><label class="chkin"><input type="checkbox" id="rInfl"> Rises with inflation</label></div></div>
+        <label class="f">Income from age<input id="rStart" type="number"></label>
+        <label class="f">Income through age<input id="rEnd" type="number"></label>
+      </div>
+      <p class="note">The rental isn't part of your invested money. Property equity is its value minus the debt still owed on it.</p>
+      <label class="optchk"><input type="checkbox" id="rSellOn"> Sell rental and invest the equity</label>
+      <div class="optbody rsellopt">
+        <div class="grid2">
+          <label class="f">Sell at age<input id="rSell" type="number"></label>
+          <label class="f">Selling costs and taxes %<input id="rCost" type="number" min="0" max="60"></label>
+        </div>
+        <p class="note" id="rSellNote"></p>
+      </div>
+      <label class="optchk"><input type="checkbox" id="dOn"> Sell rental and 1031 the full proceeds into a DST</label>
+      <div class="optbody dstopt">
+        <div class="grid3" style="align-items:end">
+          <label class="f">Bought at age<input id="dAge" type="number"></label>
+          <label class="f" title="In today's dollars">Income per year<input id="dIncome" class="money"></label>
+          <label class="f" title="How much the payout grows each year, before inflation">Payout grows %/yr<input id="dGrow" type="number" step="0.5" min="-5" max="10"></label>
+        </div>
+        <p class="note" id="dNote"></p>
+      </div>
+      <h3>Primary home</h3>
+      <div class="grid2">
+        <label class="f" title="What the home is worth minus what you still owe on it">Home equity<input id="hEquity" class="money"></label>
+      </div>
+      <label class="optchk"><input type="checkbox" id="hDown"> Downsize and buy a smaller place</label>
+      <div class="optbody hopt" data-plan="sell">
+        <div class="grid3" style="align-items:end">
+          <label class="f">Sell at age (your age)<input id="hAge" type="number"></label>
+          <label class="f">Selling costs and taxes %<input id="hSellCost" type="number" min="0" max="60"></label>
+          <label class="f" title="Bought outright with cash from the sale. This becomes your new home equity.">Price of new home (paid in cash)<input id="hNextHome" class="money"></label>
+        </div>
+      </div>
+      <p class="note" id="hNote"></p>
+      <h3>Other income</h3>
+      <div class="scroll"><table class="tbl" id="incTbl">
+        <thead><tr><th>Source</th><th class="num">Per year</th><th>From</th><th>Through</th><th title="Checked: the amount rises with inflation every year. Unchecked: the same dollar amount every year, so it buys less over time.">Rises w/ inflation</th><th></th></tr></thead><tbody></tbody>
+      </table></div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addInc">+ Add income</button></div>
+      <p class="note">"Rises with inflation" on: the income keeps its buying power. Off: it pays the same dollar amount every year starting at its first age, so it's worth about <span class="inflPct">2.5</span>% less each year in today's dollars (your inflation setting in Market assumptions).</p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-ss">
+  <details class="card" open>
+    <summary>Social Security <span class="sumval" id="sumSS"></span></summary>
+    <div class="body">
+      <div class="grid3">
+        <label class="f">You claim at<select id="pClaim"></select></label>
+        <label class="f spopt">Spouse claims at<select id="jClaim"></select></label>
+        <div><label class="f">Benefit level %<input id="ssAdj" type="number" min="0" max="150"></label>
+          <p class="note" style="margin-top:6px">100% pays the full amounts in the table. To test a Social Security funding shortfall, try 81%, the cut expected if Congress doesn't fix the trust fund by the mid-2030s.</p></div>
+      </div>
+      <h3>Monthly benefit by claiming age</h3>
+      <p class="note" style="margin-top:0">Enter your monthly benefit for each claiming age (and your spouse's, if the Spouse box is checked), in today's dollars. You can find these estimates at ssa.gov under "my Social Security". The planner uses the row for the claiming age picked above.</p>
+      <div class="scroll"><table class="tbl" id="ssTbl">
+        <thead><tr><th>Age</th><th class="num">You</th><th class="num spopt">Spouse</th></tr></thead><tbody></tbody>
+      </table></div>
+      <p class="note spopt">Spousal and survivor benefits aren't included. In real life a spouse can get up to half of the other's benefit, and a surviving spouse keeps the larger of the two checks. The planner simply pays each person their own amount.</p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-spending">
+  <details class="card" open>
+    <summary>Spending <span class="sumval" id="sumSpend"></span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="f">Scale all spending %<input id="spendScale" type="number" min="10" max="300"></label>
+      </div>
+      <h3>Spending phases (only lines marked "Phase")</h3>
+      <div class="scroll"><table class="tbl" id="phaseTbl">
+        <thead><tr><th>Phase</th><th>Through age</th><th class="num">% of baseline</th></tr></thead><tbody></tbody>
+      </table></div>
+      <h3>Budget lines</h3>
+      <div id="budInfl"></div>
+      <div class="scroll"><table class="tbl" id="budTbl">
+        <thead><tr><th title="Drag to move a line"></th><th>Item</th><th class="num">Amount</th><th>Per</th><th title="First age (yours) this expense is paid">From age</th><th title="Last age (yours) this expense is paid. It stops after this age.">To age</th><th title="Scales with the spending phase">Phase</th><th title="Goes down or up when a spending guardrail box is checked">Can cut</th><th title="A fixed payment, like a mortgage: the same dollars every year, so it shrinks in today's dollars and isn't raised for inflation">Fixed $</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addLine">+ Add line</button><button class="btn" id="linkAll" title="Set every From age (except health insurance before Medicare, Medicare and late-life care) to follow the retirement age">Link From ages to retirement age</button></div>
+      <p class="note">Drag the <b>⠿</b> handle to move a line up or down, or into another group. <b style="color:var(--accent)">Blue</b> ages are linked: From ages follow your retirement age, and To ages follow the plan's end age, both in Ages and timing. Type a different age to set one by hand, or type the linked age to link it again. Health insurance before Medicare, Medicare and late-life care keep their own ages. Each line is paid every year from the "From age" through the "To age" (your age), then stops. For example, set the mortgage's To age to the year before it's paid off, and stop health insurance before Medicare at 64. Every amount is in today's dollars and keeps pace with inflation, except the mortgage (see the note under it).</p>
+      <h3 style="margin-top:18px">Spending guardrails</h3>
+      <div class="grid2" style="align-items:end">
+        <label class="row" style="gap:8px;font-size:13px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="gOn" style="flex:none;margin-top:2px"> <span>Cut back on "Can cut" lines when the money is at risk</span></label>
+        <label class="f">Cut by %<input id="gCut" type="number" min="0" max="100"></label>
+        <label class="row" style="gap:8px;font-size:13px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="gRaiseOn" style="flex:none;margin-top:2px"> <span>Spend more on "Can cut" lines when the plan is very safe</span></label>
+        <label class="f">Raise by %<input id="gRaise" type="number" min="0" max="200"></label>
+      </div>
+      <p id="gHint" style="font-size:14px;font-weight:600;color:var(--text);margin:10px 0 0;line-height:1.45"></p>
+      <p class="note" id="gNote"></p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-year">
+  <details class="card" open>
+    <summary>Year-by-year table</summary>
+    <div class="body">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabYear" aria-selected="true">Year by year</button>
+        <button class="tab" role="tab" id="tabWd" aria-selected="false">Withdrawal plan</button>
+      </div>
+      <div id="yearView" class="scroll"><table class="tbl" id="yearTbl"></table></div>
+      <div id="wdView" style="display:none">
+        <div class="row" style="align-items:end;gap:14px">
+          <label class="f" style="width:120px">Plan for age<input id="wdAge" type="number"></label>
+          <div id="wdNeed" style="flex:1;min-width:220px;font-size:14px"></div>
+        </div>
+        <p class="note">Amounts are in today's dollars. The amount in (parentheses) is the estimated dollars in that year, using your inflation setting. As the years go by, update your age today and balances: when "Plan for age" is your current age, the two match.</p>
+        <div class="scroll" style="margin-top:10px"><table class="tbl" id="wdTbl"></table></div>
+        <div id="wdWarn"></div>
+        <p class="note"><b>How to pick the column:</b> look at how stocks did over the 12 months before you withdraw. Down = fell more than 10%. Flat = between down 10% and up 10%. Up = rose more than 10%. <a href="https://www.google.com/finance/quote/VTI:NYSEARCA?window=1Y" target="_blank" rel="noopener">Check VTI's last 12 months</a> (Google Finance opens on the 1-year view; the green or red % next to the price is the 12-month change). Change any percentage to set your own rules. Each column should add up to 100%.</p>
+        <h3 style="margin-top:18px">Up-year refill</h3>
+        <div class="row" style="gap:14px;align-items:end">
+          <label class="f" style="width:210px" title="Your Cash and Bonds holdings today, from the Holdings list">Cash + bonds on hand<input id="wdHave" class="money ro" readonly tabindex="-1"></label>
+          <label class="f" style="width:210px" title="How many years of withdrawals to keep in cash and bonds">Keep in cash + bonds (years)<input id="wdYears" type="number" min="0" step="0.5"></label>
+          <label class="f" style="width:210px" title="Years to keep × the withdrawal at the Plan for age above">Needed for those years<input id="wdNeedYrs" class="money ro" readonly tabindex="-1"></label>
+        </div>
+        <p class="note" id="wdCover"></p>
+        <div id="wdRefill" style="font-size:14px;margin-top:8px"></div>
+      </div>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-roth">
+  <details class="card" open>
+    <summary>Roth conversions <span class="sumval" id="sumRoth"></span></summary>
+    <div class="body">
+      <div class="grid3" style="align-items:end">
+        <label class="f">Fill up to the<select id="rcTop"><option value="12">12% bracket</option><option value="22">22% bracket</option><option value="24">24% bracket</option></select></label>
+        <label class="f">Convert from age<input id="rcFrom" type="number"></label>
+        <label class="f">Through age<input id="rcTo" type="number"></label>
+        <label class="f" title="Keeps income under this amount from 63 on, since Medicare's IRMAA looks back two years. 0 = no limit.">Stay under (IRMAA)<input id="rcIrmaa" class="money"></label>
+      </div>
+      <label class="row" style="gap:8px;font-size:14px;margin-top:12px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="rcPlan" style="flex:none;margin-top:3px"> <span>Include these conversions in the Monte Carlo and Year by Year</span></label>
+      <p class="note" id="rcPlanNote" style="margin-top:4px"></p>
+      <p class="note" id="rcWindow" style="font-size:14px;font-weight:600;color:var(--text)"></p>
+      <h3>Taxable income by age</h3>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--muted);opacity:.45"></i>Income you already have</span>
+        <span><i class="sw" style="background:var(--c-trad)"></i>Roth conversion</span>
+        <span><i class="sw" style="background:none;border-top:2px dashed var(--text-2);height:0;border-radius:0"></i>Top of tax bracket</span>
+        <span><i class="sw" style="background:none;border-top:2px dotted var(--warn);height:0;border-radius:0"></i>IRMAA limit (from 63, after the standard deduction)</span>
+      </div>
+      <div class="chart" id="rcChart" style="max-width:760px"></div>
+      <h3>Suggested conversions</h3>
+      <div class="scroll"><table class="tbl" id="rcTbl"></table></div>
+      <h3>Before and after</h3>
+      <div class="scroll"><table class="tbl" id="rcCmp"></table></div>
+      <p id="rcSummary" style="font-size:14px;margin:10px 0 0"></p>
+      <p class="note">How this works: each year in your window, it converts just enough from Tax Deferred to Roth to reach the top of the bracket you picked, counting income you already have (taxable Social Security, rental or DST, other income, and Tax Deferred withdrawals for spending). Withdrawals follow the order picked under Taxes on the Ages, Timing and Taxes page (Standard order when Flat tax is picked), and each year's withdrawals pay the tax worked out from the brackets. The tax on each conversion is paid from Brokerage (Cash only if Brokerage runs out), so the full amount lands in the Roth. "Money left after all taxes" counts Roth, Brokerage and Cash in full and Tax Deferred after 22% tax. It follows one typical market path (your investment mix's average return after inflation), and uses the brackets from the Tax Brackets box (married filing jointly with a spouse, single without), rising with inflation, plus the state tax % under Taxes. RMDs start at 75. All amounts are in today's dollars. Watch two things: conversions before 65 raise your income for ACA subsidies, and Medicare's IRMAA looks at income from two years earlier. Use it to plan with your accountant.</p>
+    </div>
+  </details>
+</section>
+<section class="page" id="page-market">
+  <details class="card" open>
+    <summary>Market assumptions</summary>
+    <div class="body">
+      <p class="note" style="margin-top:0">Yearly returns <b>before</b> inflation, like the numbers on a statement. The planner subtracts inflation each year, so higher inflation means lower real growth. Average is the simple average of yearly returns; volatility is how much they swing.</p>
+      <div class="scroll"><table class="tbl">
+        <thead><tr><th></th><th class="num">Average %</th><th class="num">Volatility %</th></tr></thead>
+        <tbody>
+          <tr><td>Stocks</td><td><input id="sMean" type="number" step="0.1"></td><td><input id="sSd" type="number" step="0.5"></td></tr>
+          <tr><td>Bonds</td><td><input id="bMean" type="number" step="0.1"></td><td><input id="bSd" type="number" step="0.5"></td></tr>
+          <tr><td>Cash</td><td><input id="cMean" type="number" step="0.1"></td><td><input id="cSd" type="number" step="0.5"></td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid2" style="margin-top:8px">
+        <label class="f">Stock–bond correlation<input id="rho" type="number" step="0.05" min="-1" max="1"></label>
+        <label class="f">Fund fees %/yr<input id="fee" type="number" step="0.05" min="0"></label>
+        <label class="f">Inflation %/yr<input id="infl" type="number" step="0.1"></label>
+        <label class="f">Number of simulations<select id="sims"><option>1000</option><option>5000</option><option>10000</option></select></label>
+        <label class="f">Monte Carlo Success target %<input id="target" type="number" min="50" max="99"></label>
+      </div>
+      <p class="note"><b>Not sure what to use for inflation?</b> Check the <a href="https://fred.stlouisfed.org/series/T10YIE" target="_blank" rel="noopener">market's 10-year inflation forecast</a> (the number at the top of the page) and add a little cushion. 2.5–3% is common for a long plan. <a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener">Today's CPI</a> (the "All items" bar, last 12 months) shows how fast prices are rising right now. If it's well above the forecast, try the stagflation test below instead of raising this number for the whole plan.</p>
+      <h3>Stress tests</h3>
+      <label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="stOn"> Include a period of high inflation and weak markets</label>
+      <div class="grid3 stopt" style="margin-top:8px">
+        <label class="f">Starts at age<input id="stStart" type="number"></label>
+        <label class="f">Lasts (years)<input id="stYears" type="number" min="1"></label>
+        <label class="f">Inflation %/yr<input id="stInfl" type="number" step="0.5"></label>
+        <label class="f">Stocks avg %<input id="stS" type="number" step="0.5"></label>
+        <label class="f">Bonds avg %<input id="stB" type="number" step="0.5"></label>
+        <label class="f">Cash avg %<input id="stC" type="number" step="0.5"></label>
+      </div>
+      <p class="note stopt" id="stNote"></p>
+      <label class="row" style="gap:6px;font-size:13px;margin-top:10px"><input type="checkbox" id="bsOn"> Bad markets in the first years of retirement</label>
+      <div class="grid3 bsopt" style="margin-top:8px">
+        <label class="f">Lasts (years)<input id="bsYears" type="number" min="1" max="15"></label>
+        <label class="f">Stocks avg %<input id="bsS" type="number" step="0.5"></label>
+        <label class="f">Bonds avg %<input id="bsB" type="number" step="0.5"></label>
+      </div>
+      <p class="note bsopt" id="bsNote"></p>
+      <label class="row" style="gap:6px;font-size:13px;margin-top:10px"><input type="checkbox" id="ldOn"> Lost decade: replay US markets from 2000 to 2009</label>
+      <div class="grid3 ldopt" style="margin-top:8px">
+        <label class="f">Starts at age<input id="ldStart" type="number"></label>
+      </div>
+      <p class="note ldopt" id="ldNote"></p>
+    </div>
+  </details>
+</section>
+</main>
+<footer>This is an educational model, not financial advice. It runs thousands of random market histories using the averages and volatility above. Taxes follow the option picked on the Ages, Timing and Taxes page: a flat % of spending, or tax worked out by account type with the brackets in the Tax Brackets box.</footer>
+
+<script>
+"use strict";
+/* ---------------- Defaults (blank, ready to fill in) ---------------- */
+const SS_P = {62:0,63:0,64:0,65:0,66:0,67:0,68:0,69:0,70:0};
+const SS_J = {62:0,63:0,64:0,65:0,66:0,67:0,68:0,69:0,70:0};
+const L = (cat,item,amt,per,start,end,phase,fixed)=>({cat,item,amt,per,start,end,phase:!!phase,fixed:!!fixed});
+// Starting holdings: [account, ticker, fund name, amount, group]
+const HOLDINGS = [
+  ["Your 401(k)", "", "", 0, "Foundational"],
+  ["Your Roth IRA", "", "", 0, "Growth"],
+  ["Brokerage account", "", "", 0, "Dividends"],
+  ["Cash savings", "Cash", "Savings or money market", 0, "Cash"],
+];
+const DEFAULTS = {
+  holdings: HOLDINGS.map(([acct,tick,desc,amt,group])=>({acct,tick,desc,amt,group})),
+  ver:9, spouse:false, currentAge:50, jessAge:50, retireAge:65, endAge:95, pSave:0, jSave:0,
+  accounts:[
+    {name:"Your 401(k)",type:"Traditional",bal:0},
+    {name:"Your Roth IRA",type:"Roth",bal:0},
+    {name:"Brokerage account",type:"Brokerage",bal:0},
+    {name:"Cash savings",type:"Cash",bal:0}
+  ],
+  alloc:{stocks:70,bonds:20,cash:10},
+  market:{sMean:9.2,sSd:17,bMean:4.6,bSd:6,cMean:3.0,cSd:1,rho:0.1,fee:0.15,infl:2.5,sims:5000,target:85},
+  // Stagflation: during these years, inflation and average returns (before inflation) are replaced
+  stress:{on:false,start:65,years:10,infl:10,sMean:6,bMean:4,cMean:8},
+  // Bad start: weak average returns (before inflation) for the first years of retirement. Swings stay the same.
+  badStart:{on:false,years:5,sMean:-2,bMean:3},
+  // Lost decade: every simulation replays 2000–2009 returns, in order, starting at this age (null = retirement age)
+  lostDecade:{on:false,start:null},
+  ss:{pClaim:67,jClaim:67,adj:100,p:SS_P,j:SS_J},
+  // DST bought with a 1031 exchange of the rental: off to start
+  dst:{on:false,age:65,income:0,grow:1.5},
+  rental:{value:0,income:0,start:65,end:95,sell:null,sellOn:false,cost:25,infl:true},
+  home:{equity:0,plan:"keep",age:75,sellCost:7,nextHome:0},
+  income:[{name:"Part-time work",amt:0,start:65,end:67,infl:true}],
+  phases:[{name:"Go-go",through:75,mult:115},{name:"Slow-go",through:85,mult:95},{name:"No-go",through:95,mult:85}],
+  // Withdrawal plan: which holding groups to sell from, by how the market did over the past 12 months (% of the year's withdrawal)
+  wd:{years:2, have:null, age:67, rules:{
+    down:{Cash:60,Bonds:40,Dividends:0,Growth:0,Foundational:0},
+    flat:{Cash:10,Bonds:20,Dividends:70,Growth:0,Foundational:0},
+    up:{Cash:0,Bonds:0,Dividends:0,Growth:50,Foundational:50}}},
+  targets:null,  // target mix by group (%); null = the defaults in GROUP_TARGETS
+  taxPct:17, spendScale:100,
+  // Taxes: 1 flat % of spending, 2 standard order, 3 fill the bracket
+  tax:{mode:1,gains:50,fill:22,rothPlan:false},
+  brk:{year:2026, rates:[10,12,22,24,32,35,37], cgRates:[0,15,20],
+    mfj:{tops:[24800,100800,211400,403550,512450,768700], std:32200, std65:1650, cg0:98900, cg15:613700},
+    single:{tops:[12400,50400,105700,201775,256225,640600], std:16100, std65:2050, cg0:49450, cg15:545500}},
+  // Roth conversion page: fill up to this bracket between these ages
+  roth:{top:22,from:65,to:74,irmaa:109000,state:4},
+  // Spending guardrails: lower (cut) or raise the "Can cut" lines in every retirement year. Only one can be on.
+  guard:{on:false,cut:10,raiseOn:false,raise:10},
+  budget:[
+    L("Housing","Mortgage",0,"Monthly",65,95,0,1),
+    L("Housing","Rent",0,"Monthly",65,95),
+    L("Housing","Property tax",0,"Annual",65,95),
+    L("Housing","Home insurance",0,"Annual",65,95),
+    L("Housing","HOA dues",0,"Monthly",65,95),
+    L("Housing","Electric, gas, water, trash",0,"Monthly",65,95),
+    L("Housing","Internet, phone, TV",0,"Monthly",65,95),
+    L("Housing","Maintenance and repairs",0,"Annual",65,95),
+    L("Healthcare","Health insurance before Medicare (ACA)",0,"Annual",60,64),
+    L("Healthcare","Medicare premiums (B, D)",0,"Monthly",65,95),
+    L("Healthcare","Medigap / Advantage plan",0,"Monthly",65,95),
+    L("Healthcare","Dental and vision",0,"Monthly",65,95),
+    L("Healthcare","Copays and prescriptions",0,"Monthly",65,95),
+    L("Healthcare","Long-term care insurance",0,"Annual",65,95),
+    L("Healthcare","Late-life care (assisted living)",0,"Annual",88,95),
+    L("Food","Groceries",0,"Monthly",65,95),
+    L("Food","Dining out",0,"Monthly",65,95,1),
+    L("Transportation","Car payment",0,"Monthly",65,95),
+    L("Transportation","Auto insurance",0,"Annual",65,90),
+    L("Transportation","Gas or charging",0,"Monthly",65,90),
+    L("Transportation","Registration and maintenance",0,"Annual",65,90),
+    L("Transportation","Future vehicle replacement",0,"Monthly",65,90),
+    L("Lifestyle","Travel and vacations",0,"Annual",65,90,1),
+    L("Lifestyle","Hobbies and activities",0,"Monthly",65,95,1),
+    L("Lifestyle","Entertainment",0,"Monthly",65,95,1),
+    L("Lifestyle","Subscriptions and streaming",0,"Monthly",65,95,1),
+    L("Lifestyle","Gifts and holidays",0,"Annual",65,95,1),
+    L("Lifestyle","Charitable giving",0,"Annual",65,95),
+    L("Personal","Clothing",0,"Monthly",65,95,1),
+    L("Personal","Personal care",0,"Monthly",65,95,1),
+    L("Personal","Pets",0,"Monthly",65,95),
+    L("Family","Help for children or grandchildren",0,"Annual",65,95),
+    L("Other","Insurance (life, umbrella)",0,"Annual",65,95),
+    L("Other","Accountant and advisor fees",0,"Annual",65,95),
+    L("Other","Cushion for surprises",0,"Annual",65,95)
+  ]
+};
+// Budget "From age" follows the retirement age unless changed by hand.
+// Lines tied to a specific age (health insurance before Medicare, Medicare, late-life care) don't follow it.
+const NO_LINK = /\bACA\b|Medicare|Medigap|Late-life|assisted living/i;
+const linkDefault = (b, retire) => +b.start===+retire && !NO_LINK.test(b.item||"");
+DEFAULTS.budget.forEach(b=>b.link=linkDefault(b, DEFAULTS.retireAge));
+// Lines that can go down or up with the spending guardrails
+const FLEX_RE = /dining|travel|vacation|hobb|entertain|subscription|gym|club|gift|charit|clothing|big project|vehicle replacement|help for children/i;
+DEFAULTS.budget.forEach(b=>b.flex=FLEX_RE.test(b.item||""));
+// When the retirement age changes, move every linked line's From age with it
+function syncLinkedStarts(){ for(const b of S.budget) if(b.link) b.start=+S.retireAge; }
+// "To age" (and rental income, last spending phase) follow the plan's end age unless changed by hand
+function setEndLinks(o, endAge){
+  for(const b of o.budget||[]) if(b.endLink===undefined) b.endLink = +b.end===+endAge;
+  if(o.rental && o.rental.endLink===undefined) o.rental.endLink = +o.rental.end===+endAge;
+  const lp=(o.phases||[])[(o.phases||[]).length-1]; if(lp && lp.endLink===undefined) lp.endLink = +lp.through===+endAge;
+}
+setEndLinks(DEFAULTS, DEFAULTS.endAge);
+function syncLinkedEnds(){
+  const e=+S.endAge;
+  for(const b of S.budget) if(b.endLink) b.end=e;
+  if(S.rental.endLink){ S.rental.end=e; $("rEnd").value=e; }
+  const lp=S.phases[S.phases.length-1]; if(lp && lp.endLink) lp.through=e;
+}
+const STORE_KEY = "retirement-mc-generic-v1";  // separate from any other copy of the planner
+const clone = o => JSON.parse(JSON.stringify(o));
+let S = load();
+let seed = 20261103;
+
+function load(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw){ return fromSaved(JSON.parse(raw)); } }catch(e){}
+  const d=clone(DEFAULTS); d.budget.forEach(b=>b.dt=todayISO()); return d;
+}
+// Older saves had one age (58), an age gap and one savings field. Move them to the new fields.
+function fromSaved(o){
+  // Holdings saved before groups existed: look up each one's group from the starting list
+  if(o && Array.isArray(o.holdings)){
+    for(const h of o.holdings){ if(h.group) continue;
+      const m=HOLDINGS.find(x=>x[0]===h.acct&&x[1]===h.tick)||HOLDINGS.find(x=>x[1]===h.tick);
+      h.group = m ? m[4] : "Foundational"; }
+    // "Value" group was renamed "Dividends"
+    for(const h of o.holdings){ if(h.group==="Value") h.group="Dividends"; }
+  }
+  if(o && o.jessAge===undefined){
+    delete o.currentAge; delete o.jessOffset;
+    if(o.savings){ o.pSave=o.savings; }
+    delete o.savings;
+  }
+  // Version 4: home section is keep or downsize only
+  if(o && o.ver<4){
+    if(o.home && o.home.plan!=="sell"){ o.home.plan="keep"; }
+    if(o.home){ for(const k of ["rmLump","rmMonthly","refiCash","refiPmt","refiEnd","payoff"]) delete o.home[k]; if(!o.home.nextHome) o.home.nextHome=600000; }
+    o.ver=4;
+  }
+  // Version 5: return inputs are before inflation. Convert saved after-inflation numbers so results stay the same.
+  if(o && o.ver<5){
+    if(o.market){
+      const i=(+o.market.infl||0)/100, nom=r=>Math.round((((1+(+r||0)/100)*(1+i))-1)*1000)/10;
+      for(const k of ["sMean","bMean","cMean"]) if(o.market[k]!=null) o.market[k]=nom(o.market[k]);
+    }
+    o.ver=5;
+  }
+  // Budget lines saved before linking existed: link the ones that start at retirement
+  if(o && Array.isArray(o.budget)) for(const b of o.budget) if(b.link===undefined) b.link=linkDefault(b, o.retireAge ?? DEFAULTS.retireAge);
+  // Version 6: also link lines still at the original starting age, so a retirement age changed earlier doesn't leave them stuck
+  if(o && (o.ver||1)<6){
+    const ra=+(o.retireAge ?? DEFAULTS.retireAge);
+    if(Array.isArray(o.budget)) for(const b of o.budget){
+      if(!NO_LINK.test(b.item||"") && (+b.start===ra || +b.start===+DEFAULTS.retireAge)){ b.link=true; b.start=ra; }
+    }
+    o.ver=6;
+  }
+  // Version 7: To ages at the plan's end age (or the original default end) follow the plan end
+  if(o && (o.ver||1)<7){
+    const ea=+(o.endAge ?? DEFAULTS.endAge), de=+DEFAULTS.endAge;
+    for(const b of o.budget||[]) if(b.endLink===undefined && (+b.end===ea || +b.end===de)){ b.endLink=true; b.end=ea; }
+    if(o.rental && o.rental.endLink===undefined && (+o.rental.end===ea || +o.rental.end===de)){ o.rental.endLink=true; o.rental.end=ea; }
+    const lp=(o.phases||[])[(o.phases||[]).length-1]; if(lp && lp.endLink===undefined && (+lp.through===ea || +lp.through===de)){ lp.endLink=true; lp.through=ea; }
+    setEndLinks(o, ea);
+    o.ver=7;
+  }
+  // "Can cut" box on budget lines
+  if(o && Array.isArray(o.budget)) for(const b of o.budget) if(b.flex===undefined) b.flex=FLEX_RE.test(b.item||"");
+  // Version 9: guardrails are two optional switches, both off to start
+  if(o && (o.ver||1)<9){ o.guard={on:false,cut:+(o.guard&&o.guard.cut)||10,raiseOn:false,raise:+(o.guard&&o.guard.raise)||10}; o.ver=9; }
+  if(o && o.guard) o.guard=Object.assign(clone(DEFAULTS.guard), o.guard);
+  // Withdrawal plan saved before the refill step existed
+  if(o && o.wd){ if(o.wd.years==null) o.wd.years=2; if(o.wd.have===undefined) o.wd.have=null; }
+  if(o && o.tax) o.tax=Object.assign(clone(DEFAULTS.tax), o.tax);
+  // Budget lines remember when their amount was last entered (for the inflation reminder); older saves count as current today
+  if(o && Array.isArray(o.budget)) for(const b of o.budget) if(!b.dt) b.dt=todayISO();
+  // Tax brackets: fill in anything missing from the 2026 numbers
+  if(o){ const d=clone(DEFAULTS.brk), b=o.brk||{}; o.brk=Object.assign(d, b, {mfj:Object.assign(d.mfj, b.mfj||{}), single:Object.assign(d.single, b.single||{})}); }
+  if(o && o.spouse===undefined){ const j=(o.ss&&o.ss.j)||{}; o.spouse = (+o.jSave>0) || Object.values(j).some(v=>+v>0); }
+  // Rental sale is now a checkbox: on if a sale age was set
+  if(o && o.rental && o.rental.sellOn===undefined) o.rental.sellOn = o.rental.sell!=null && o.rental.sell!=="";
+  return Object.assign(clone(DEFAULTS), o);
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ---------------- Formatting ---------------- */
+const fmt$ = v => (v<0?"-":"") + "$" + Math.round(Math.abs(v)).toLocaleString("en-US");
+function fmtK(v){ const a=Math.abs(v); const s=v<0?"-":"";
+  if(a>=1e6) return s+"$"+parseFloat((a/1e6).toFixed(a>=1e7?1:2))+"M";
+  if(a>=1e3) return s+"$"+Math.round(a/1e3)+"K"; return s+"$"+Math.round(a); }
+const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isFinite(n)?n:0; };
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------------- Input binding ---------------- */
+const $ = id => document.getElementById(id);
+const simple = [
+  ["currentAge",()=>S.currentAge,v=>{ S.currentAge=num(v); budDismissed=false; budInflUI(); }],
+  ["retireAge",()=>S.retireAge,v=>{ S.retireAge=num(v); syncLinkedStarts(); renderTables(); badStartUI(); lostDecadeUI(); }],
+  ["wdAge",()=>S.wd.age,v=>{ S.wd.age=num(v); wdRender(); }],
+  ["wdYears",()=>S.wd.years,v=>{ S.wd.years=num(v); wdRender(); }],
+  ["endAge",()=>S.endAge,v=>{ S.endAge=num(v); syncLinkedEnds(); renderTables(); }],
+  ["jessAge",()=>S.jessAge,v=>S.jessAge=num(v)],
+  ["pSave",()=>S.pSave,v=>S.pSave=num(v),true],
+  ["jSave",()=>S.jSave,v=>S.jSave=num(v),true],
+  ["aStocks",()=>S.alloc.stocks,v=>S.alloc.stocks=num(v)],
+  ["aBonds",()=>S.alloc.bonds,v=>S.alloc.bonds=num(v)],
+  ["aCash",()=>S.alloc.cash,v=>S.alloc.cash=num(v)],
+  ["ssAdj",()=>S.ss.adj,v=>S.ss.adj=num(v)],
+  ["rValue",()=>S.rental.value,v=>{ S.rental.value=num(v); rentalUI(); },true],
+  ["rIncome",()=>S.rental.income,v=>S.rental.income=num(v),true],
+  ["rStart",()=>S.rental.start,v=>S.rental.start=num(v)],
+  ["rEnd",()=>S.rental.end,v=>{ S.rental.end=num(v); S.rental.endLink=(S.rental.end===+S.endAge); $("rEnd").classList.toggle("linked",S.rental.endLink); }],
+  ["rSell",()=>S.rental.sell??"",v=>{ S.rental.sell=(String(v).trim()===""?null:num(v)); rentalUI(); }],
+  ["rCost",()=>S.rental.cost,v=>{ S.rental.cost=num(v); rentalUI(); }],
+  ["dAge",()=>S.dst.age,v=>{ S.dst.age=num(v); dstUI(); }],
+  ["dIncome",()=>S.dst.income,v=>{ S.dst.income=num(v); dstUI(); },true],
+  ["dGrow",()=>S.dst.grow,v=>{ S.dst.grow=num(v); dstUI(); }],
+  ["taxPct",()=>S.taxPct,v=>S.taxPct=num(v)],
+  ["spendScale",()=>S.spendScale,v=>S.spendScale=num(v)],
+  ["sMean",()=>S.market.sMean,v=>S.market.sMean=num(v)],
+  ["sSd",()=>S.market.sSd,v=>S.market.sSd=num(v)],
+  ["bMean",()=>S.market.bMean,v=>S.market.bMean=num(v)],
+  ["bSd",()=>S.market.bSd,v=>S.market.bSd=num(v)],
+  ["cMean",()=>S.market.cMean,v=>S.market.cMean=num(v)],
+  ["cSd",()=>S.market.cSd,v=>S.market.cSd=num(v)],
+  ["rho",()=>S.market.rho,v=>S.market.rho=num(v)],
+  ["fee",()=>S.market.fee,v=>S.market.fee=num(v)],
+  ["infl",()=>S.market.infl,v=>S.market.infl=num(v)],
+  ["stStart",()=>S.stress.start,v=>{S.stress.start=num(v); stressUI();}],
+  ["stYears",()=>S.stress.years,v=>{S.stress.years=num(v); stressUI();}],
+  ["stInfl",()=>S.stress.infl,v=>{S.stress.infl=num(v); stressUI();}],
+  ["stS",()=>S.stress.sMean,v=>{S.stress.sMean=num(v); stressUI();}],
+  ["stB",()=>S.stress.bMean,v=>{S.stress.bMean=num(v); stressUI();}],
+  ["stC",()=>S.stress.cMean,v=>{S.stress.cMean=num(v); stressUI();}],
+  ["bsYears",()=>S.badStart.years,v=>{S.badStart.years=num(v); badStartUI();}],
+  ["ldStart",()=>ldStartAge(),v=>{ const a=num(v); S.lostDecade.start = a===+S.retireAge ? null : a; lostDecadeUI(); }],
+  ["bsS",()=>S.badStart.sMean,v=>{S.badStart.sMean=num(v); badStartUI();}],
+  ["bsB",()=>S.badStart.bMean,v=>{S.badStart.bMean=num(v); badStartUI();}],
+  ["sims",()=>S.market.sims,v=>S.market.sims=num(v)],
+  ["target",()=>S.market.target,v=>S.market.target=num(v)],
+  ["pClaim",()=>S.ss.pClaim,v=>S.ss.pClaim=num(v)],
+  ["hEquity",()=>S.home.equity,v=>{S.home.equity=num(v); homeUI();},true],
+  ["hAge",()=>S.home.age,v=>{S.home.age=num(v); homeUI();}],
+  ["hSellCost",()=>S.home.sellCost,v=>{S.home.sellCost=num(v); homeUI();}],
+  ["hNextHome",()=>S.home.nextHome,v=>{S.home.nextHome=num(v); homeUI();},true],
+  ["jClaim",()=>S.ss.jClaim,v=>S.ss.jClaim=num(v)],
+  ["rcTop",()=>S.roth.top,v=>S.roth.top=num(v)],
+  ["rcFrom",()=>S.roth.from,v=>S.roth.from=num(v)],
+  ["rcTo",()=>S.roth.to,v=>S.roth.to=num(v)],
+  ["rcIrmaa",()=>S.roth.irmaa,v=>S.roth.irmaa=num(v),true],
+  ["rcState",()=>S.roth.state,v=>S.roth.state=num(v)],
+  ["txGains",()=>S.tax.gains,v=>{ S.tax.gains=num(v); taxUI(); }],
+  ["txFill",()=>S.tax.fill,v=>{ S.tax.fill=num(v); taxUI(); }],
+  ["gCut",()=>S.guard.cut,v=>S.guard.cut=num(v)],
+  ["gRaise",()=>S.guard.raise,v=>S.guard.raise=num(v)],
+];
+function fillSimple(){
+  $("stOn").checked = !!S.stress.on; stressUI();
+  $("bsOn").checked = !!S.badStart.on; badStartUI();
+  $("ldOn").checked = !!S.lostDecade.on; lostDecadeUI();
+  $("gOn").checked = !!S.guard.on; $("gRaiseOn").checked = !!S.guard.raiseOn;
+  $("rInfl").checked = S.rental.infl!==false;
+  $("dOn").checked = !!S.dst.on; dstUI();
+  $("brkYear").value = S.brk.year; renderBrk();
+  $("spOn").checked = !!S.spouse; spouseUI();
+  $("rSellOn").checked = !!S.rental.sellOn; rentalUI();
+  $("hDown").checked = S.home.plan==="sell";
+  $("rcPlan").checked = !!S.tax.rothPlan; taxUI();
+  $("rEnd").classList.toggle("linked",!!S.rental.endLink);
+  homeUI();
+  for(const [id,get,,money] of simple){ const el=$(id); const v=get(); el.value = money ? (v?Math.round(v).toLocaleString("en-US"):"0") : v; }
+}
+function bindSimple(){
+  $("stOn").addEventListener("change",e=>{ S.stress.on=e.target.checked; stressUI(); changed(); });
+  $("bsOn").addEventListener("change",e=>{ S.badStart.on=e.target.checked; badStartUI(); changed(); });
+  $("ldOn").addEventListener("change",e=>{ S.lostDecade.on=e.target.checked; lostDecadeUI(); changed(); });
+  // Only one guardrail at a time: checking one unchecks the other
+  $("gOn").addEventListener("change",e=>{ S.guard.on=e.target.checked; if(S.guard.on){ S.guard.raiseOn=false; $("gRaiseOn").checked=false; } changed(); });
+  $("gRaiseOn").addEventListener("change",e=>{ S.guard.raiseOn=e.target.checked; if(S.guard.raiseOn){ S.guard.on=false; $("gOn").checked=false; } changed(); });
+  $("brkYear").addEventListener("input",e=>{ S.brk.year=num(e.target.value); brkNote(); taxUI(); changed(false); });
+  $("brkReset").addEventListener("click",()=>{ if(!confirm("Put back the 2026 IRS brackets, deductions and capital gains numbers?")) return;
+    S.brk=clone(DEFAULTS.brk); $("brkYear").value=S.brk.year; renderBrk(); changed(); });
+  $("hDown").addEventListener("change",e=>{ S.home.plan=e.target.checked?"sell":"keep"; homeUI(); changed(); });
+  $("rInfl").addEventListener("change",e=>{ S.rental.infl=e.target.checked; changed(); });
+  $("spOn").addEventListener("change",e=>{ S.spouse=e.target.checked;
+    // IRMAA limit: swap the standard single and joint amounts if it hasn't been changed by hand
+    if(S.spouse && +S.roth.irmaa===109000) S.roth.irmaa=218000; else if(!S.spouse && +S.roth.irmaa===218000) S.roth.irmaa=109000;
+    $("rcIrmaa").value=Math.round(+S.roth.irmaa||0).toLocaleString("en-US"); spouseUI(); taxUI(); renderBrk(); changed(); });
+  $("dOn").addEventListener("change",e=>{ S.dst.on=e.target.checked; if(S.dst.on){ S.rental.sellOn=false; $("rSellOn").checked=false; rentalUI(); } dstUI(); changed(); });
+  $("rSellOn").addEventListener("change",e=>{ S.rental.sellOn=e.target.checked;
+    if(S.rental.sellOn){ if(S.rental.sell==null || S.rental.sell==="") { S.rental.sell=+S.retireAge; $("rSell").value=S.rental.sell; }
+      S.dst.on=false; $("dOn").checked=false; dstUI(); }
+    rentalUI(); changed(); });
+  // Taxes: exactly one box is checked; clicking the checked one leaves it checked
+  [1,2,3].forEach(m=>$("tx"+m).addEventListener("change",()=>{ S.tax.mode=m; taxUI(); changed(); }));
+  $("rcPlan").addEventListener("change",e=>{ S.tax.rothPlan=e.target.checked; taxUI(); changed(); });
+  for(const [id,,set,money] of simple){
+    const el=$(id);
+    el.addEventListener("input",()=>{ set(el.value); changed(); });
+    if(money) el.addEventListener("blur",()=>{ el.value = Math.round(num(el.value)).toLocaleString("en-US"); });
+  }
+}
+// Cash left after selling the home and paying cash for the new one
+function homeCash(){ const H=S.home; return (+H.equity||0)*(1-(+H.sellCost||0)/100) - (+H.nextHome||0); }
+// Show the downsize fields only when chosen, plus a short explanation
+function homeUI(){
+  const H=S.home, plan=H.plan==="sell"?"sell":"keep";
+  document.querySelectorAll(".hopt").forEach(el=>{ el.style.display = plan==="sell" ? "" : "none"; });
+  if(plan==="keep"){ $("hNote").innerHTML="The home isn't part of your invested money and isn't used to pay for retirement."; return; }
+  const net=(+H.equity||0)*(1-(+H.sellCost||0)/100), cash=homeCash();
+  $("hNote").innerHTML = `At ${H.age}: sale brings <b>${fmt$(net)}</b> after costs. The new home is bought outright, so your <b>new home equity is ${fmt$(+H.nextHome||0)}</b>, and ` +
+    (cash>=0 ? `<b>${fmt$(cash)}</b> goes into your savings.` : `the extra <b>${fmt$(-cash)}</b> comes out of your savings.`) +
+    ` The Mortgage budget line stops at this age, with no rent. Property tax, insurance and upkeep stay as entered, so lower them if the smaller place costs less. Married couples can usually exclude up to $500,000 of gain from tax.`;
+}
+// Stagflation fields show only when the test is on
+// Ages covered by the bad-start test
+function badStartAges(){ const B=S.badStart; return [+S.retireAge, +S.retireAge+Math.max(1,+B.years||1)-1]; }
+function badStartUI(){
+  const B=S.badStart; document.querySelectorAll(".bsopt").forEach(el=>el.style.display=B.on?"":"none");
+  if(!B.on) return;
+  const [a,b]=badStartAges(), n=b-a+1, f=v=>(v>=0?"+":"")+v.toFixed(0)+"%";
+  const sTot=(Math.pow(1+(+B.sMean||0)/100,n)-1)*100;
+  $("bsNote").innerHTML=`Ages ${a}–${b}, starting the year you retire: stocks average ${+B.sMean}% a year and bonds ${+B.bMean}% (before inflation), so stocks end the stretch about <b>${f(sTot)}</b> on average. Yearly swings stay the same, so some runs are worse. This is the riskiest time for a bad market: you're selling while prices are low. For reference, US stocks lost about 2% a year from 2000 to 2004.`;
+}
+// Lost decade: actual yearly returns 2000–2009, before inflation (S&P 500 with dividends, US bond index, 3-month T-bills)
+const LOST_DECADE = {
+  years:[2000,2001,2002,2003,2004,2005,2006,2007,2008,2009],
+  s:[-9.1,-11.9,-22.1,28.7,10.9,4.9,15.8,5.5,-37.0,26.5],
+  b:[11.6,8.4,10.3,4.1,4.3,2.4,4.3,7.0,5.2,5.9],
+  c:[5.8,3.4,1.6,1.0,1.4,3.2,4.7,4.4,1.4,0.2]
+};
+function ldStartAge(){ const L=S.lostDecade; return L && L.start!=null && L.start!=="" ? +L.start : +S.retireAge; }
+function lostDecadeUI(){
+  const L=S.lostDecade; document.querySelectorAll(".ldopt").forEach(el=>el.style.display=L.on?"":"none");
+  const el=$("ldStart"); if(el && document.activeElement!==el){ el.value=ldStartAge(); el.classList.toggle("linked", L.start==null); }
+  if(!L.on) return;
+  const a=ldStartAge(), D=LOST_DECADE, f=v=>(v>0?"+":"")+Math.round(v)+"%";
+  const tot=(D.s.reduce((x,v)=>x*(1+v/100),1)-1)*100, btot=(D.b.reduce((x,v)=>x*(1+v/100),1)-1)*100;
+  $("ldNote").innerHTML=`Ages ${a}–${a+9}: every simulation gets the same stock years, in order: ` +
+    D.s.map((v,i)=>`${a+i}: <b>${f(v)}</b>`).join(", ") +
+    `. Stocks end the decade about <b>${f(tot)}</b> (before inflation), with two crashes: the dot-com bust and 2008. Bonds did well, about ${f(btot)} over the decade. After that, markets are random again. <span style="color:var(--accent)">Blue</span> means the start follows your retirement age.`;
+}
+// Rental sale: show the inputs when it's on, and what the sale adds to savings
+function rentalUI(){
+  const R=S.rental, on=!!R.sellOn; document.querySelectorAll(".rsellopt").forEach(el=>el.style.display=on?"":"none");
+  if(!on) return;
+  const net=(+R.value||0)*(1-(+R.cost||0)/100);
+  $("rSellNote").innerHTML = R.sell==null || R.sell==="" ? "Enter the age to sell." :
+    `At ${R.sell}, the sale adds <b>${fmt$(net)}</b> (equity minus ${+R.cost||0}% selling costs and taxes) to your savings, and the rental income stops.`;
+}
+// Tax Brackets box: editable federal numbers for both filing types
+function brkLabels(){
+  [...$("txFill").options].forEach(o=>o.textContent=brkRate(o.value)+"%");
+  [...$("rcTop").options].forEach(o=>o.textContent=brkRate(o.value)+"% bracket");
+}
+function renderBrk(){
+  const B=S.brk, used=S.spouse?"mfj":"single", T=$("brkTbl");
+  const money=(obj,key,i)=>{ const v=i==null?obj[key]:obj[key][i]; return `<input class="money" data-k="${key}" ${i!=null?`data-i="${i}"`:""} value="${Math.round(+v||0).toLocaleString("en-US")}">`; };
+  const col=f=>`class="${f===used?"used":""}"`;
+  let h=`<thead><tr><th>Rate</th><th ${col("mfj")}>Married filing jointly</th><th ${col("single")}>Single</th></tr></thead><tbody>`;
+  h+=`<tr class="sec"><td colspan="3">Federal income tax: taxable income from … up to</td></tr>`;
+  B.rates.forEach((r,i)=>{
+    const cell=f=>{ const F=B[f], lo=i?Math.round(+F.tops[i-1]||0).toLocaleString("en-US"):"0";
+      return `<td ${col(f)} data-f="${f}"><span class="from">$${lo} – </span>${i<6?money(F,"tops",i):"and up"}</td>`; };
+    h+=`<tr><td><input class="rate" type="number" step="0.5" min="0" max="99" data-rate="${i}" value="${r}"> %</td>${cell("mfj")}${cell("single")}</tr>`;
+  });
+  h+=`<tr class="sec"><td colspan="3">Standard deduction</td></tr>`;
+  h+=`<tr><td>Standard deduction</td><td ${col("mfj")} data-f="mfj">${money(B.mfj,"std")}</td><td ${col("single")} data-f="single">${money(B.single,"std")}</td></tr>`;
+  h+=`<tr><td>Extra at 65+ (each person)</td><td ${col("mfj")} data-f="mfj">${money(B.mfj,"std65")}</td><td ${col("single")} data-f="single">${money(B.single,"std65")}</td></tr>`;
+  h+=`<tr class="sec"><td colspan="3">Capital gains (Brokerage): taxable income up to</td></tr>`;
+  [["cg0",0],["cg15",1]].forEach(([k,i])=>{
+    h+=`<tr><td><input class="rate" type="number" step="0.5" min="0" max="99" data-cg="${i}" value="${B.cgRates[i]}"> %</td><td ${col("mfj")} data-f="mfj">${money(B.mfj,k)}</td><td ${col("single")} data-f="single">${money(B.single,k)}</td></tr>`; });
+  h+=`<tr><td><input class="rate" type="number" step="0.5" min="0" max="99" data-cg="2" value="${B.cgRates[2]}"> %</td><td ${col("mfj")}>above that</td><td ${col("single")}>above that</td></tr></tbody>`;
+  T.innerHTML=h;
+  T.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const v=num(inp.value), td=inp.closest("td"), f=td&&td.dataset.f;
+      if(inp.dataset.rate!=null) B.rates[+inp.dataset.rate]=v;
+      else if(inp.dataset.cg!=null) B.cgRates[+inp.dataset.cg]=v;
+      else if(inp.dataset.i!=null) B[f][inp.dataset.k][+inp.dataset.i]=v;
+      else B[f][inp.dataset.k]=v;
+      brkNote(); brkLabels(); changed();
+    });
+    if(inp.classList.contains("money")) inp.addEventListener("blur",()=>{ inp.value=Math.round(num(inp.value)).toLocaleString("en-US"); renderBrk(); });
+  });
+  brkNote(); brkLabels();
+}
+function brkNote(){
+  const B=S.brk, bad=["mfj","single"].filter(f=>B[f].tops.some((t,i)=>i && +t<=+B[f].tops[i-1]));
+  $("sumBrk").textContent=`${B.year} · ${S.spouse?"Married filing jointly":"Single"}`;
+  $("brkNote").innerHTML=(bad.length?`<b style="color:var(--warn)">Each bracket's top should be higher than the one before it (check ${bad.map(f=>f==="mfj"?"Married filing jointly":"Single").join(" and ")}).</b> `:"")+
+    `The plan uses the <b>${S.spouse?"Married filing jointly":"Single"}</b> column (shaded), set by the Spouse checkbox. `+
+    `These are the IRS numbers for ${B.year}. The planner treats them as today's dollars and assumes they rise with inflation each year, so update them when the IRS publishes a new year's numbers (usually each fall). `+
+    `They're used by Standard order, Fill the bracket order and the Roth Conversions page. The flat tax option doesn't use them. Social Security's taxable-income thresholds are set by law and aren't adjusted for inflation, so they're not listed here.`;
+}
+// DST: show the inputs when it's on, and explain what the payout is worth over time
+function dstUI(){
+  const D=S.dst; document.querySelectorAll(".dstopt").forEach(el=>el.style.display=D.on?"":"none");
+  if(!D.on) return;
+  const g=+D.grow||0, i=+S.market.infl||0, yrs=Math.max(1,+S.endAge-(+D.age)), real=(1+g/100)/(1+i/100);
+  const endVal=(+D.income||0)*Math.pow(real,yrs);
+  $("dNote").innerHTML=`From age ${D.age}, the DST pays ${fmt$(+D.income||0)} a year (today's dollars), and the payout grows ${g}% a year. ` +
+    `With ${i}% inflation, by age ${S.endAge} it's worth about <b>${fmt$(endVal)}</b> a year in today's dollars. ` +
+    `When the DST is on, the rental above is treated as exchanged into it: rental income stops at age ${D.age}, and no sale proceeds are added.`;
+}
+// Taxes box: keep one box checked and explain the pick
+function taxUI(){
+  const X=S.tax, m=+X.mode||1;
+  [1,2,3].forEach(k=>$("tx"+k).checked = k===m);
+  $("rcPlan").disabled = m===1;
+  $("rcPlanNote").textContent = m===1 ? "To use this, pick Standard order or Fill the bracket order under Taxes on the Ages, Timing and Taxes page. With a flat tax, this page is a side what-if." :
+    X.rothPlan ? "On: the conversions below and their tax are part of the Monte Carlo, the success rate and the Year by Year spending." : "Off: this page is a side what-if and doesn't change the success rate.";
+  $("taxNote").innerHTML = (m===1
+      ? "Adds the same % to every year's spending to cover income tax, no matter which account the money comes from. Simple, but it can't show the effect of withdrawal order, RMDs or Roth conversions."
+      : (m===2 ? "Spending comes from Brokerage first, then Tax Deferred, with Roth last. "
+               : `Spending comes from Tax Deferred first, up to the top of the ${brkRate(X.fill)}% bracket, then Brokerage, with Roth last. If Brokerage runs out, more Tax Deferred comes out before Roth. Before 60 it follows the Standard order. `) +
+        "Cash stays in reserve for down markets and is only used if everything else runs out. " +
+        `Tax is worked out each year with ${S.brk.year} ${S.spouse?"married-filing-jointly":"single-filer"} brackets (rising with inflation)`+": Tax Deferred withdrawals and RMDs are regular income, " +
+        `${+X.gains||0}% of each Brokerage withdrawal is taxed as capital gains (0%, 15% or 20%), Cash and Roth are tax-free, and up to 85% of Social Security is taxable. ` +
+        "RMDs start at 75. Tax Deferred money taken out before 60 pays a 10% penalty. Savings while working go into Tax Deferred. ACA subsidies aren't modeled.") +
+    " The Tax column in Year by Year shows each year's tax on a typical market path.";
+}
+// Spouse box: show or hide everything about a spouse
+function spouseUI(){ document.body.classList.toggle("nosp", !S.spouse); }
+// Ages for hover text: "Age 70" alone, or "You 70, spouse 68"
+function who(a, j){ return S.spouse ? `You <b>${a}</b>, spouse <b>${j}</b>` : `Age <b>${a}</b>`; }
+function stressUI(){
+  const T=S.stress; document.querySelectorAll(".stopt").forEach(el=>el.style.display=T.on?"":"none");
+  if(!T.on) return;
+  const real=r=>((1+r/100)/(1+T.infl/100)-1)*100, f=v=>(v>=0?"+":"")+v.toFixed(1)+"%";
+  $("stNote").innerHTML=`Ages ${T.start}–${+T.start+(+T.years)-1}: prices rise ${T.infl}% a year. After inflation, stocks average <b>${f(real(+T.sMean))}</b>, bonds <b>${f(real(+T.bMean))}</b>, cash <b>${f(real(+T.cMean))}</b>. Yearly swings stay the same. For reference, 1973–1982 averaged about 8.7% inflation with stocks near 6.7% before inflation.`;
+}
+// Inflation for each year from today (stagflation years use the stress rate)
+function inflPath(n){
+  const T=S.stress, a=[];
+  for(let y=0;y<n;y++){ const age=S.currentAge+y; const on=T.on && age>=+T.start && age<+T.start+(+T.years); a.push((on?+T.infl:+S.market.infl)/100); }
+  return a;
+}
+// cum[y] = how much prices have risen from today to year y
+function inflCum(n){ const p=inflPath(n), c=[1]; for(let y=1;y<=n;y++) c.push(c[y-1]*(1+p[y-1])); return c; }
+function claimOptions(){
+  for(const id of ["pClaim","jClaim"]){ $(id).innerHTML = Object.keys(SS_P).map(a=>`<option value="${a}">${a}</option>`).join(""); }
+}
+
+/* ---------------- Editable tables ---------------- */
+function moneyInput(val, onset){ const i=document.createElement("input"); i.className="money"; i.style.textAlign="right";
+  i.value=Math.round(val||0).toLocaleString("en-US");
+  i.addEventListener("input",()=>{onset(num(i.value)); changed();});
+  i.addEventListener("blur",()=>{i.value=Math.round(num(i.value)).toLocaleString("en-US");}); return i; }
+function textInput(val,onset){ const i=document.createElement("input"); i.value=val||""; i.addEventListener("input",()=>{onset(i.value);changed(false);}); return i; }
+function ageInput(val,onset){ const i=document.createElement("input"); i.type="number"; i.value=val; i.style.width="54px"; i.addEventListener("input",()=>{onset(num(i.value));changed();}); return i; }
+function selectInput(opts,val,onset,label){ const s=document.createElement("select"); s.innerHTML=opts.map(o=>`<option value="${o}"${o===val?" selected":""}>${label?label(o):o}</option>`).join(""); s.addEventListener("change",()=>{onset(s.value);changed();}); return s; }
+function check(val,onset){ const c=document.createElement("input"); c.type="checkbox"; c.checked=!!val; c.addEventListener("change",()=>{onset(c.checked);changed();}); return c; }
+function delBtn(onclick){ const b=document.createElement("button"); b.className="x"; b.title="Remove"; b.textContent="×"; b.addEventListener("click",()=>{onclick(); renderTables(); changed();}); return b; }
+// Budget "From age" box: shows when it follows the retirement age
+// Budget "To age" box: shows when it follows the plan's end age
+function endInput(b){
+  const i=ageInput(b.end,v=>{ b.end=v; b.endLink=(v===+S.endAge); style(); });
+  const style=()=>{ i.classList.toggle("linked",!!b.endLink); i.title=b.endLink?"Follows the plan's end age. Type a different age to set it by hand.":"Set by hand. Type the plan's end age to link it again."; };
+  style(); return i;
+}
+function startInput(b){
+  const i=ageInput(b.start,v=>{ b.start=v; b.link=(v===+S.retireAge && !NO_LINK.test(b.item||"")); style(); });
+  const style=()=>{ i.classList.toggle("linked",!!b.link); i.title=b.link?"Follows your retirement age. Type a different age to set it by hand.":"Set by hand. Type your retirement age to link it again."; };
+  style(); return i;
+}
+function td(child,cls){ const t=document.createElement("td"); if(cls) t.className=cls; if(child instanceof Node) t.appendChild(child); else t.textContent=child; return t; }
+
+// Drag and drop for budget lines: dropping next to a line (or on a group heading) moves it into that group
+let dragIdx=null;
+function clearDrop(){ document.querySelectorAll("#budTbl tr.drop-before,#budTbl tr.drop-after,#budTbl tr.drop-into").forEach(r=>r.classList.remove("drop-before","drop-after","drop-into")); }
+function dropTarget(tr, where){
+  tr.addEventListener("dragover",e=>{ if(dragIdx==null) return; e.preventDefault(); e.dataTransfer.dropEffect="move";
+    const w=where(e); clearDrop(); (w.row||tr).classList.add(w.into?"drop-into":w.after?"drop-after":"drop-before"); });
+  tr.addEventListener("dragleave",e=>{ if(!tr.contains(e.relatedTarget)) tr.classList.remove("drop-before","drop-after","drop-into"); });
+  tr.addEventListener("drop",e=>{ if(dragIdx==null) return; e.preventDefault(); clearDrop();
+    const w=where(e), from=dragIdx; let at=w.at;
+    const item=S.budget.splice(from,1)[0]; if(from<at) at--;
+    item.cat=w.cat; S.budget.splice(Math.max(0,at),0,item);
+    dragIdx=null; renderTables(); changed(); });
+}
+function renderTables(){
+  syncGroups(); renderHoldings(); renderNames();
+  // accounts
+  const ab=$("acctTbl").querySelector("tbody"); ab.innerHTML="";
+  S.accounts.forEach((a,i)=>{ const tr=document.createElement("tr");
+    tr.append(td(textInput(a.name,v=>{ a.name=v; renderHoldings(); })), td(selectInput(["Traditional","Roth","Brokerage","Cash"],a.type,v=>{ a.type=v; renderHoldings(); },tN)),
+      td(moneyInput(a.bal,v=>a.bal=v),"num"), td(delBtn(()=>S.accounts.splice(i,1)))); ab.appendChild(tr); });
+  // SS
+  const sb=$("ssTbl").querySelector("tbody"); sb.innerHTML="";
+  Object.keys(SS_P).forEach(age=>{ const tr=document.createElement("tr");
+    tr.append(td(age), td(moneyInput(S.ss.p[age],v=>S.ss.p[age]=v),"num"), td(moneyInput(S.ss.j[age],v=>S.ss.j[age]=v),"num spopt")); sb.appendChild(tr); });
+  // other income
+  const ib=$("incTbl").querySelector("tbody"); ib.innerHTML="";
+  S.income.forEach((r,i)=>{ const tr=document.createElement("tr");
+    tr.append(td(textInput(r.name,v=>r.name=v)), td(moneyInput(r.amt,v=>r.amt=v),"num"), td(ageInput(r.start,v=>r.start=v)), td(ageInput(r.end,v=>r.end=v)), td(check(r.infl!==false,v=>r.infl=v)), td(delBtn(()=>S.income.splice(i,1)))); ib.appendChild(tr); });
+  // phases
+  const pb=$("phaseTbl").querySelector("tbody"); pb.innerHTML="";
+  S.phases.forEach(p=>{ const tr=document.createElement("tr");
+    const m=document.createElement("input"); m.type="number"; m.value=p.mult; m.style.textAlign="right"; m.addEventListener("input",()=>{p.mult=num(m.value);changed();});
+    const th=ageInput(p.through,v=>{ p.through=v; if(p===S.phases[S.phases.length-1]){ p.endLink=(v===+S.endAge); th.classList.toggle("linked",p.endLink); } }); th.classList.toggle("linked",!!p.endLink);
+    tr.append(td(p.name), td(th), td(m,"num")); pb.appendChild(tr); });
+  // budget
+  budInflUI();
+  const bb=$("budTbl").querySelector("tbody"); bb.innerHTML="";
+  let lastCat=null;
+  S.budget.forEach((b,i)=>{
+    if(b.cat!==lastCat){ lastCat=b.cat; const h=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=10; c.innerHTML=`<b style="font-size:12px;color:var(--text-2)">${esc(b.cat||"Other")}</b>`; h.appendChild(c); bb.appendChild(h);
+      dropTarget(h, ()=>({cat:b.cat, at:S.budget.findIndex(x=>x.cat===b.cat), into:true})); }
+    const tr=document.createElement("tr");
+    const amt=moneyInput(b.amt,v=>{ b.amt=v; b.dt=todayISO(); budUndo=null; budInflUI(); }); amt.style.width="74px";
+    const per=selectInput(["Monthly","Annual"],b.per,v=>b.per=v); per.style.width="74px";
+    const name=textInput(b.item,v=>b.item=v); name.style.minWidth="100px"; name.style.width="100%";
+    const hd=td("⠿","drag"); hd.title="Drag to move this line, or drop it in another group";
+    hd.addEventListener("mousedown",()=>tr.draggable=true); hd.addEventListener("mouseup",()=>tr.draggable=false);
+    tr.addEventListener("dragstart",e=>{ dragIdx=i; e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",String(i)); tr.classList.add("dragging"); });
+    tr.addEventListener("dragend",()=>{ tr.draggable=false; tr.classList.remove("dragging"); dragIdx=null; clearDrop(); });
+    dropTarget(tr, e=>{ const r=tr.getBoundingClientRect(), after=e.clientY>r.top+r.height/2; return {cat:b.cat, at:i+(after?1:0), after}; });
+    tr.append(hd, td(name), td(amt,"num"), td(per), td(startInput(b)), td(endInput(b)),
+      td(check(b.phase,v=>b.phase=v)), td(check(b.flex,v=>b.flex=v)), td(check(b.fixed,v=>{ b.fixed=v; renderTables(); })), td(delBtn(()=>S.budget.splice(i,1))));
+    bb.appendChild(tr);
+    // Fixed-dollar lines (the mortgage) get a short explanation underneath
+    if(b.fixed){ const n=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=10; c.className="fixnote";
+      dropTarget(n, ()=>({cat:b.cat, at:i+1, after:true, row:tr}));
+      c.innerHTML=`Fixed payment: stays the same dollar amount every year, and isn't raised by the inflation reminder, so with inflation it costs a little less in today's dollars each year (about <span class="inflPct">${esc(S.market.infl)}</span>% less per year).`; n.appendChild(c); bb.appendChild(n); }
+  });
+}
+
+// ---- Budget inflation reminder ----
+// Each line keeps the date its amount was last entered (b.dt). When lines are about a year old or more,
+// a banner offers to raise them by the inflation assumption (or a % you type). Fixed $ lines are skipped.
+let budDismissed=false, budUndo=null, budPct=null;
+function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function monthsSince(iso){ const [y,m,d]=String(iso||todayISO()).split("-").map(Number), n=new Date();
+  return (n.getFullYear()-y)*12 + (n.getMonth()+1-m) + (n.getDate()-d)/30; }
+function budStale(){ return S.budget.filter(b=>!b.fixed && (+b.amt||0)>0 && monthsSince(b.dt)>=11); }
+function budYears(b){ return Math.max(1, Math.round(monthsSince(b.dt)/12)); }
+function budYearAmt(list){ return list.reduce((t,b)=>t+(+b.amt||0)*(b.per==="Monthly"?12:1),0); }
+function budInflUI(){
+  const box=$("budInfl"); if(!box) return;
+  if(budUndo){ box.innerHTML=`<div class="warnbox budinfl"><span>Raised ${budUndo.lines.length} budget line${budUndo.lines.length>1?"s":""} for inflation (${budUndo.pct}% a year). Their dates are now today.</span> <button class="linkbtn" id="budUndoBtn" type="button">Undo</button></div>`;
+    $("budUndoBtn").onclick=()=>{ budUndo.lines.forEach(([b,amt,dt])=>{ b.amt=amt; b.dt=dt; }); budUndo=null; renderTables(); changed(); }; return; }
+  const st=budStale(); if(!st.length || budDismissed){ box.innerHTML=""; return; }
+  const oldest=st.reduce((a,b)=>String(b.dt)<String(a.dt)?b:a), [oy,om]=String(oldest.dt).split("-").map(Number);
+  const when=new Date(oy,om-1,1).toLocaleString("en-US",{month:"short",year:"numeric"}), yrs=budYears(oldest);
+  const pct = budPct ?? +S.market.infl, others=S.budget.filter(b=>!b.fixed && (+b.amt||0)>0).length-st.length;
+  box.innerHTML=`<div class="warnbox budinfl">
+    <span>Your budget was last updated in <b>${when}</b>, about ${yrs} year${yrs>1?"s":""} ago. Raise ${others>0?`those ${st.length} lines`:"it"} for inflation by</span>
+    <input id="budPct" type="number" step="0.1" min="0" max="20" value="${pct}" aria-label="Inflation percent per year"><span>% a year?</span>
+    <button class="btn primary" id="budRaise" type="button">Raise them</button><button class="btn" id="budLater" type="button">Not now</button>
+    <span class="sub"></span></div>`;
+  const sub=()=>{ const q=budPct ?? +S.market.infl, f=b=>Math.pow(1+q/100, budYears(b)), before=budYearAmt(st), after=st.reduce((t,b)=>t+(+b.amt||0)*(b.per==="Monthly"?12:1)*f(b),0);
+    box.querySelector(".sub").innerHTML=`Adds about <b>${fmt$(after-before)}</b> a year (${fmt$(before)} → ${fmt$(after)}). `+
+      (yrs>1?`Compounded: ${q}% a year for ${yrs} years is about ${(Math.pow(1+q/100,yrs)*100-100).toFixed(1)}%. `:"")+
+      `The % starts at your inflation assumption; type the actual figure if you know it. `+
+      (others>0?`Lines you've updated in the last year are left alone. `:"")+`Fixed $ lines are skipped. `+
+      `Also check Social Security (copy today's numbers from your SSA statement), rental income and home equity.`; };
+  sub();
+  $("budPct").addEventListener("input",e=>{ budPct=num(e.target.value); sub(); });
+  $("budLater").onclick=()=>{ budDismissed=true; budInflUI(); };
+  $("budRaise").onclick=()=>{ const t=todayISO(), p=budPct ?? +S.market.infl;
+    budUndo={pct:p, lines:st.map(b=>[b,b.amt,b.dt])};
+    st.forEach(b=>{ b.amt=Math.round((+b.amt||0)*Math.pow(1+p/100, budYears(b))); b.dt=t; });
+    renderTables(); changed(); };
+}
+
+/* ---------------- Model (deterministic parts) ---------------- */
+function phaseMult(age){ for(const p of S.phases){ if(age<=p.through) return p.mult/100; } return (S.phases[S.phases.length-1]?.mult??100)/100; }
+function phaseName(age){ for(const p of S.phases){ if(age<=p.through) return p.name; } return S.phases[S.phases.length-1]?.name||""; }
+function totalBalance(){ return S.accounts.reduce((s,a)=>s+(+a.bal||0),0); }
+function ssMonthly(tbl, age){ return +tbl[age] || 0; }
+
+// How much the "Can cut" lines change: −cut% or +raise%, or 0 when neither box is checked
+function guardMult(){ const G=S.guard||{}; return G.on ? -(+G.cut||0)/100 : G.raiseOn ? (+G.raise||0)/100 : 0; }
+function schedule(noGuard){
+  const n = Math.max(1, S.endAge - S.currentAge + 1);
+  const infl = S.market.infl/100, tax = taxMode()===1 ? S.taxPct/100 : 0, scale = S.spendScale/100;
+  const cum = inflCum(n);  // price level by year, so fixed-dollar amounts can be turned into today's dollars
+  const rows=[];
+  const H=S.home, homeOn = H && H.plan && H.plan!=="keep";
+  for(let y=0;y<n;y++){
+    const age = S.currentAge + y, retired = age >= S.retireAge;
+    let before=0, flexB=0;
+    if(retired){
+      for(const b of S.budget){
+        if(age < b.start || age > b.end) continue;
+        if(homeOn && age>=+H.age && /mortgage/i.test(b.item||"")) continue; // new home is bought outright
+        let a = (+b.amt||0) * (b.per==="Monthly"?12:1);
+        if(b.phase) a *= phaseMult(age);
+        if(b.fixed) a /= cum[y];
+        before += a; if(b.flex) flexB += a;
+      }
+    }
+    const gm = noGuard ? 0 : guardMult();
+    before += flexB*gm;
+    before *= scale;
+    const spend = before*(1+tax), flex = flexB*scale*(1+tax), flexAdj = flex*gm;
+    const adj = S.ss.adj/100;
+    const pSS = age >= S.ss.pClaim ? ssMonthly(S.ss.p,S.ss.pClaim)*12*adj : 0;
+    const jAge = S.jessAge + y;
+    const jSS = S.spouse && jAge >= S.ss.jClaim ? ssMonthly(S.ss.j,S.ss.jClaim)*12*adj : 0;
+    const sold = !!S.rental.sellOn && S.rental.sell!=null && S.rental.sell!=="";
+    // Income that doesn't rise with inflation pays the same dollars from its first age, so it shrinks in today's dollars
+    const flat = (amt, on, start) => on===false ? amt*cum[Math.max(0,Math.min(y,start-S.currentAge))]/cum[y] : amt;
+    const D=S.dst||{}, dstOn=!!D.on && age>=+D.age;
+    let rent = (age>=S.rental.start && age<=S.rental.end && !(sold && age>=S.rental.sell) && !dstOn) ? flat(+S.rental.income||0, S.rental.infl, S.rental.start) : 0;
+    let other = 0; for(const r of S.income){ if(age>=r.start && age<=r.end) other += flat(+r.amt||0, r.infl, r.start); }
+    let lump = (sold && age===+S.rental.sell && !D.on) ? (+S.rental.value||0)*(1-S.rental.cost/100) : 0;
+    // DST: amount in today's dollars at the purchase age, then grows by its own rate (inflation still applies)
+    if(dstOn){ const y0=Math.max(0,Math.min(y,+D.age-S.currentAge));
+      other += (+D.income||0) * Math.pow(1+(+D.grow||0)/100, y-y0) * cum[y0]/cum[y]; }
+    let homeLump = 0;
+    // Downsize: sale proceeds pay cash for the new home; what's left goes to savings (or comes out of savings if short)
+    if(homeOn && age===+H.age) homeLump = homeCash();
+    lump += homeLump;
+    const contrib = retired ? 0 : (+S.pSave||0) + (S.spouse ? (+S.jSave||0) : 0);
+    const income = pSS + jSS + rent + other;
+    rows.push({age, jAge, phase: retired?phaseName(age):"Working", before, spend, tax: spend-before, flex, flexAdj, pSS, jSS, rent, other, income, lump, homeLump, contrib,
+               net: spend - income - contrib - lump});
+  }
+  return rows;
+}
+
+/* ---------------- Taxes by account type (Standard order and Fill the bracket) ---------------- */
+function taxMode(){ return +((S.tax||{}).mode)||1; }
+let LTCG0=98900, LTCG15=613700, LTCG_R=[0,.15,.20], SS_B1=32000, SS_B2=44000;  // capital gains bracket tops and rates, and Social Security tax thresholds (set by setFiling from the Tax Brackets box)
+// Capital gains tax: gains sit on top of regular taxable income
+function ltcgTax(ordTI, gTI){ const top=ordTI+gTI, over=lo=>Math.max(0, top-Math.max(ordTI,lo)); return LTCG_R[0]*gTI+(LTCG_R[1]-LTCG_R[0])*over(LTCG0)+(LTCG_R[2]-LTCG_R[1])*over(LTCG15); }
+// Per-year numbers that don't depend on the market path. mode 2 = standard order, 3 = fill the bracket.
+function taxCtx(rows, mode){
+  const n=rows.length, cum=inflCum(n), X=S.tax||{}, R=S.roth;
+  const K={n, mode, gain:Math.min(1,Math.max(0,(+X.gains||0)/100)), st:(+R.state||0)/100, age:[], ss:[], b1:[], b2:[], std:[], base:[], div:[], fill:[], convTo:[], capped:[]};
+  const topFill=RC_TOPS[+X.fill]||RC_TOPS[22], topConv=RC_TOPS[+R.top]||RC_TOPS[22];
+  rows.forEach((r,y)=>{
+    const ss=r.pSS+r.jSS, b1=SS_B1/cum[y], b2=SS_B2/cum[y], std=RC_STD+RC_STD65*((r.age>=65)+(S.spouse&&r.jAge>=65)), base=r.rent+r.other;
+    K.age[y]=r.age; K.ss[y]=ss; K.b1[y]=b1; K.b2[y]=b2; K.std[y]=std; K.base[y]=base;
+    K.div[y]=r.age>=75 ? (RC_RMD[Math.min(r.age,100)]||6.4) : 0;
+    // How much Tax Deferred income (x) fits under a limit
+    const agi=x=>{ const o=x+base; return o+rcTaxSS(o+0.5*ss, ss, b1, b2); };
+    const most=ok=>{ if(!ok(0)) return 0; let lo=0, hi=2e7; for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(ok(m)) lo=m; else hi=m; } return lo; };
+    K.fill[y]=most(x=>agi(x)-std<=topFill);
+    const inWin=r.age>=+R.from && r.age<=+R.to && r.age>=S.retireAge, cap=(+R.irmaa>0 && r.age>=63) ? +R.irmaa : Infinity;
+    const toTop=inWin ? most(x=>agi(x)-std<=topConv) : -1;
+    K.convTo[y]=inWin ? Math.min(toTop, cap<Infinity ? most(x=>agi(x)<=cap) : toTop) : -1;
+    K.capped[y]=inWin && K.convTo[y]<toTop-1;
+  });
+  return K;
+}
+// Federal + state income tax for one year: oT = Tax Deferred income (withdrawals, RMD, conversions), g = capital gains
+function taxOf(K, y, oT, g){
+  const o=oT+K.base[y], ss=K.ss[y], tss=rcTaxSS(o+g+0.5*ss, ss, K.b1[y], K.b2[y]), std=K.std[y];
+  const ordTI=Math.max(0, o+tss-std), TI=Math.max(0, o+tss+g-std);
+  return rcBracketTax(ordTI)+ltcgTax(ordTI, TI-ordTI)+K.st*TI;
+}
+// The same tax, split into its parts
+function taxParts(K, y, oT, g){
+  const o=oT+K.base[y], ss=K.ss[y], tss=rcTaxSS(o+g+0.5*ss, ss, K.b1[y], K.b2[y]), std=K.std[y];
+  const ordTI=Math.max(0, o+tss-std), TI=Math.max(0, o+tss+g-std);
+  return {fed:rcBracketTax(ordTI), cg:ltcgTax(ordTI, TI-ordTI), st:K.st*TI, ordTI, tss};
+}
+// One year on one path. b=[Traditional, Brokerage, Cash, Roth] is changed in place.
+// need0 = spending before tax minus income. Results go in out: tax, w (Traditional taken), conv, rmd, short.
+function taxStep(K, y, b, need0, convert, out){
+  const early=K.age[y]<60, rmd=K.div[y] ? b[0]/K.div[y] : 0, fill=(K.mode===3 && !early) ? K.fill[y] : 0, cTo=convert ? K.convTo[y] : -1;
+  let tax=0, w0=0, w1=0, w2=0, w3=0, conv=0;
+  for(let it=0; it<5; it++){   // tax depends on what's taken out, so settle it in a few passes
+    let need=need0+tax;
+    // RMD, and in Fill the bracket order, Traditional up to the bracket top; then Brokerage, more Traditional, Roth.
+    // Cash is a reserve for down markets: only touched if everything else is gone.
+    w0=Math.min(b[0], Math.max(rmd, Math.min(fill, Math.max(0,need)))); need-=w0;
+    w1=Math.min(b[1], Math.max(0,need)); need-=w1;
+    { const x=Math.min(b[0]-w0, Math.max(0,need)); w0+=x; need-=x; }
+    w3=Math.min(b[3], Math.max(0,need)); need-=w3;
+    w2=Math.min(b[2], Math.max(0,need));
+    conv = cTo>=0 ? Math.max(0, Math.min(b[0]-w0, cTo-w0)) : 0;
+    tax = taxOf(K, y, w0+conv, K.gain*w1) + (early ? 0.1*w0 : 0);
+  }
+  b[0]-=w0+conv; b[1]-=w1; b[2]-=w2; b[3]-=w3-conv;
+  let extra=w0+w1+w2+w3-(need0+tax);
+  if(extra>=0) b[1]+=extra;                 // RMD or income you didn't need goes to Brokerage
+  else for(const k of [1,0,3,2]){ const x=Math.min(b[k], -extra); b[k]-=x; extra+=x; }
+  out.tax=tax; out.w=w0; out.g=K.gain*w1; out.conv=conv; out.rmd=Math.min(rmd, w0); out.short=extra<-1 ? -extra : 0;
+  out.ctax = conv>0 ? tax-taxOf(K, y, w0, K.gain*w1)-(early?0.1*w0:0) : 0;
+}
+// Starting balances by account type: [Traditional, Brokerage, Cash, Roth]
+function acctStart(){ const b=[0,0,0,0]; S.accounts.forEach(a=>{ const v=+a.bal||0; if(a.type==="Traditional") b[0]+=v; else if(a.type==="Roth") b[3]+=v; else if(a.type==="Cash") b[2]+=v; else b[1]+=v; }); return b; }
+// One typical path (fixed return). Used for the Year by Year tax and the Roth Conversions page.
+function taxProject(rows, mode, convert){
+  const K=taxCtx(rows, mode), g=rcReturn(), b=acctStart(), o={}, out=[];
+  rows.forEach((r,y)=>{ b[0]+=r.contrib;
+    const T0=b[0]; taxStep(K, y, b, r.before-r.income-r.lump, convert, o);
+    const pt=taxParts(K, y, o.w+o.conv, o.g);
+    out.push({age:r.age, tax:o.tax, parts:pt, g:o.g, pen:K.age[y]<60?0.1*o.w:0, conv:o.conv, ctax:o.ctax, rmd:o.rmd, w:o.w, T0, T:b[0], Ro:b[3], B:b[1], C:b[2], short:o.short, capped:o.conv>0 && K.capped[y],
+      before:Math.max(0, K.base[y]+o.w+rcTaxSS(K.base[y]+o.w+0.5*K.ss[y], K.ss[y], K.b1[y], K.b2[y])-K.std[y])});
+    for(let k=0;k<4;k++) b[k]*=1+g; });
+  return {rows:out, K, end:b};
+}
+// Standard order / Fill the bracket: each year's spending in the table includes the tax on a typical path
+function applyTax(rows){
+  const m=taxMode(); if(m===1) return;
+  const P=taxProject(rows, m, !!S.tax.rothPlan);
+  rows.forEach((r,y)=>{ const q=P.rows[y]; r.tax=q.tax; r.taxInfo=q; r.spend=r.before+q.tax; r.net=r.spend-r.income-r.contrib-r.lump; });
+}
+// Monte Carlo with separate accounts and tax worked out on every path
+function simulateTax(rows, R, sims, spendMult, keepPaths){
+  const n=rows.length, K=taxCtx(rows, taxMode()), start=acctStart(), conv=!!S.tax.rothPlan;
+  const need=new Float64Array(n); for(let y=0;y<n;y++){ const r=rows[y]; need[y]=r.before*spendMult-r.income-r.lump; }
+  let ok=0; const failAges=[]; const alive=new Float64Array(n);
+  const B = keepPaths ? new Float64Array(sims*n) : null, b=[0,0,0,0], o={};
+  for(let s=0;s<sims;s++){
+    b[0]=start[0]; b[1]=start[1]; b[2]=start[2]; b[3]=start[3]; let failed=false;
+    for(let y=0;y<n;y++){
+      if(!failed){
+        b[0]+=rows[y].contrib;
+        taxStep(K, y, b, need[y], conv, o);
+        if(o.short>0){ failed=true; failAges.push(rows[y].age); b[0]=b[1]=b[2]=b[3]=0; }
+        else { const g=1+R[s*n+y]; b[0]*=g; b[1]*=g; b[2]*=g; b[3]*=g; alive[y]++; }
+      }
+      if(B) B[y*sims+s]=b[0]+b[1]+b[2]+b[3];
+    }
+    if(!failed) ok++;
+  }
+  return {success: ok/sims, failAges, alive, B};
+}
+
+/* ---------------- Monte Carlo ---------------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let Z=null, Zkey="";
+function ensureZ(sims, n){
+  const key = sims+"|"+n+"|"+seed;
+  if(key===Zkey) return;
+  const rnd = mulberry32(seed);
+  Z = new Float64Array(sims*n*3);
+  for(let i=0;i<Z.length;i+=2){ // Box-Muller pairs
+    let u=rnd(); if(u<1e-12) u=1e-12; const v=rnd();
+    const r=Math.sqrt(-2*Math.log(u)); Z[i]=r*Math.cos(2*Math.PI*v); if(i+1<Z.length) Z[i+1]=r*Math.sin(2*Math.PI*v);
+  }
+  Zkey=key;
+}
+function portfolioReturns(sims,n){
+  const m=S.market, tot=(S.alloc.stocks+S.alloc.bonds+S.alloc.cash)||1;
+  const ws=S.alloc.stocks/tot, wb=S.alloc.bonds/tot, wc=S.alloc.cash/tot;
+  const rho=Math.max(-1,Math.min(1,m.rho)), k=Math.sqrt(1-rho*rho), fee=m.fee/100;
+  const R=new Float64Array(sims*n);
+  // Per-year inputs: normal years use the market settings; stagflation years use the stress settings
+  const T=S.stress, P=inflPath(n), mu=[];
+  for(let y=0;y<n;y++){ const age=S.currentAge+y, on=T.on && age>=+T.start && age<+T.start+(+T.years);
+    const r=on?[+T.sMean/100,+T.bMean/100,+T.cMean/100]:[m.sMean/100,m.bMean/100,m.cMean/100];
+    // Bad start: replaces the stock and bond averages (inflation and cash are unchanged)
+    const BS=S.badStart, [ba,bb]=badStartAges();
+    if(BS && BS.on && age>=ba && age<=bb){ r[0]=+BS.sMean/100; r[1]=+BS.bMean/100; }
+    mu.push(r); }
+  // Lost decade: which history year (0–9) each plan year replays, or -1
+  const LD=S.lostDecade, ldA=ldStartAge(), ld=[];
+  for(let y=0;y<n;y++){ const k=S.currentAge+y-ldA; ld.push(LD && LD.on && k>=0 && k<10 ? k : -1); }
+  for(let j=0;j<sims*n;j++){
+    const y=j%n, z1=Z[j*3], z2=Z[j*3+1], z3=Z[j*3+2];
+    if(ld[y]>=0){ const k=ld[y], D=LOST_DECADE; R[j]=(1+ws*D.s[k]/100+wb*D.b[k]/100+wc*D.c[k]/100-fee)/(1+P[y])-1; continue; }
+    // Returns are entered before inflation; convert to after-inflation for today's-dollar math
+    const rs=Math.max(-0.95, mu[y][0] + m.sSd/100*z1);
+    const rb=Math.max(-0.95, mu[y][1] + m.bSd/100*(rho*z1+k*z2));
+    const rc=Math.max(-0.95, mu[y][2] + m.cSd/100*z3);
+    R[j]=(1+ws*rs+wb*rb+wc*rc-fee)/(1+P[y])-1;
+  }
+  return R;
+}
+// Runs all paths. netScale scales retirement spending only (for the solver).
+function simulate(rows, R, sims, spendMult, keepPaths){
+  if(taxMode()>1) return simulateTax(rows, R, sims, spendMult, keepPaths);
+  const n=rows.length, start=totalBalance();
+  const net=new Float64Array(n);
+  for(let y=0;y<n;y++){ const r=rows[y]; net[y]= r.spend*spendMult - r.income - r.contrib - r.lump; }
+  let ok=0; const failAges=[]; const alive=new Float64Array(n);
+  const B = keepPaths ? new Float64Array(sims*n) : null;
+  for(let s=0;s<sims;s++){
+    let bal=start, failed=false;
+    for(let y=0;y<n;y++){
+      if(!failed){
+        bal -= net[y];
+        if(bal<0){ failed=true; failAges.push(rows[y].age); bal=0; }
+        else { bal *= (1+R[s*n+y]); alive[y]++; }
+      }
+      if(B) B[y*sims+s]=bal;
+    }
+    if(!failed) ok++;
+  }
+  return {success: ok/sims, failAges, alive, B};
+}
+function percentile(sorted, p){ const i=(sorted.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i); return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo); }
+
+let lastResult=null;
+function run(){
+  setFiling();
+  const rows=schedule(), n=rows.length, sims=S.market.sims|0 || 5000;
+  applyTax(rows);
+  ensureZ(sims,n);
+  const R=portfolioReturns(sims,n);
+  const res=simulate(rows,R,sims,1,true);
+  const bands=[];
+  for(let y=0;y<n;y++){
+    const col=res.B.slice(y*sims,(y+1)*sims).sort();
+    bands.push({age:rows[y].age, p10:percentile(col,.1), p25:percentile(col,.25), p50:percentile(col,.5), p75:percentile(col,.75), p90:percentile(col,.9)});
+  }
+  // solver: spending multiplier that hits the target success rate
+  // With taxes worked out per path, the solver uses the first 1,500 paths and fewer steps so typing stays quick
+  const target=S.market.target/100, fast=taxMode()>1, ss=fast?Math.min(sims,1500):sims; let lo=0.2, hi=3.0;
+  if(simulate(rows,R,ss,hi,false).success>=target) lo=hi;
+  else if(simulate(rows,R,ss,lo,false).success<target) hi=lo;
+  else for(let i=0;i<(fast?10:16);i++){ const mid=(lo+hi)/2; if(simulate(rows,R,ss,mid,false).success>=target) lo=mid; else hi=mid; }
+  const base = guardMult() ? simulate((r=>(applyTax(r),r))(schedule(true)),R,sims,1,false) : res;
+  lastResult={rows,res,base,bands,sims,safeMult:lo};
+  render(lastResult);
+}
+
+/* ---------------- Rendering ---------------- */
+function render({rows,res,base,bands,sims,safeMult}){
+  const pct=res.success*100, tgt=S.market.target;
+  $("pct").innerHTML = (pct>=99.95?"100":pct.toFixed(pct<10?1:0))+"<small>%</small>";
+  const [col,label] = pct>=tgt ? ["var(--good)","At or above your "+tgt+"% target"] : pct>=tgt-15 ? ["var(--warn)","Below your "+tgt+"% target"] : ["var(--bad)","Well below your "+tgt+"% target"];
+  $("statusLine").innerHTML = `<i class="dot" style="background:${col}"></i><span>${label}</span>`;
+  $("navPct").innerHTML = `<span class="np"><i class="dot" style="background:${col}"></i><span>${pct>=99.95?"100":pct.toFixed(pct<10?1:0)}%</span></span><small>Monte Carlo<br>success</small>`;
+  $("heroText").textContent = `In ${Math.round(pct*sims/100).toLocaleString()} of ${sims.toLocaleString()} simulated market histories, the money lasted through age ${S.endAge}.` + (taxMode()===2 ? " Taxes are worked out by account (Standard order)." : taxMode()===3 ? ` Taxes are worked out by account (Fill the ${brkRate(S.tax.fill)}% bracket order).` : "") + (taxMode()>1 && S.tax.rothPlan ? " Includes the Roth conversions." : "") + (S.guard.on ? ` "Can cut" spending is lowered ${S.guard.cut}%.` : S.guard.raiseOn ? ` "Can cut" spending is raised ${S.guard.raise}%.` : "") + (S.lostDecade.on ? ` Includes a lost decade at ages ${ldStartAge()}–${ldStartAge()+9}.` : "") + (S.badStart.on ? ` Includes bad markets at ages ${badStartAges().join("–")}.` : "") + (S.stress.on ? ` Includes a stagflation period at ages ${S.stress.start}–${+S.stress.start+(+S.stress.years)-1}.` : "");
+  const firstRet = rows.find(r=>r.age>=S.retireAge) || rows[0];
+  const sortedFail=res.failAges.slice().sort((a,b)=>a-b);
+  $("heroSub").textContent = res.failAges.length ? `When it ran out, the typical age was ${Math.round(percentile(sortedFail,.5))}. The earliest 10% of failures happened by age ${Math.round(percentile(sortedFail,.1))}.` : "None of the simulations ran out of money.";
+
+  const end=bands[bands.length-1];
+  const yrsToRet=Math.max(0,S.retireAge-S.currentAge);
+  const jRet=S.jessAge+yrsToRet;
+  $("ageNote").textContent = yrsToRet>0
+    ? (S.spouse ? `${yrsToRet} more working year${yrsToRet>1?"s":""}: you both stop when you're ${S.retireAge} (your spouse ${jRet}). Savings of ${fmt$((+S.pSave||0)+(+S.jSave||0))} a year are added until then`
+                : `${yrsToRet} more working year${yrsToRet>1?"s":""}: you stop at ${S.retireAge}. Savings of ${fmt$(+S.pSave||0)} a year are added until then`) +
+      `, and spending from savings starts at retirement. Include any employer match in the savings amounts.`
+    : `You're retired: spending comes from savings starting now.` + (S.spouse ? ` Your spouse's age is used for their Social Security start.` : "");
+  const atRet = bands[Math.max(0,yrsToRet-1)];
+  const startBal=totalBalance();
+  const retBal = yrsToRet>0 ? atRet.p50 : startBal;
+  const wr = firstRet.net>0 ? firstRet.net/retBal*100 : 0;
+  const safeSpend = firstRet.spend*safeMult;
+  const st=[
+    ["Savings today", fmt$(startBal)],
+    ...(yrsToRet>0?[[`Typical savings at retirement (${S.retireAge})`, `${fmtK(atRet.p50)}<div class="note" style="margin:0">bad case ${fmtK(atRet.p10)}</div>`]]:[]),
+    [`Spending at ${firstRet.age} (incl. tax)`, fmt$(firstRet.spend)],
+    ["First-year withdrawal rate", wr.toFixed(1)+"%"],
+    [`Typical balance at ${end.age}`, fmtK(end.p50)],
+    [`Bad case at ${end.age} (10th pct.)`, fmtK(end.p10)],
+    [`Spending for ${tgt}% success`, `${fmt$(safeSpend)}<div class="note" style="margin:0">${Math.round(safeMult*100)}% of this budget, at age ${firstRet.age}</div>`],
+  ];
+  $("stats").innerHTML = st.map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+  // sidebar summaries
+  const bk={Traditional:0,Roth:0,Brokerage:0,Cash:0}; S.accounts.forEach(a=>bk[a.type]=(bk[a.type]||0)+(+a.bal||0));
+  $("bucketTotals").innerHTML = Object.entries(bk).map(([k,v])=>`${tN(k)} ${fmtK(v)}`).join(" · ") + ` · <b>Total ${fmt$(startBal)}</b>`;
+  $("sumMoney").textContent = fmtK(startBal);
+  pieChart(bk);
+  const tot=S.alloc.stocks+S.alloc.bonds+S.alloc.cash;
+  $("allocWarn").innerHTML = Math.abs(tot-100)>0.01 ? `<div class="warnbox">The mix adds up to ${tot}%. It's being scaled to 100%.</div>` : "";
+  const ssBoth=(ssMonthly(S.ss.p,S.ss.pClaim)+(S.spouse?ssMonthly(S.ss.j,S.ss.jClaim):0))*12*S.ss.adj/100;
+  $("sumSS").textContent = fmtK(ssBoth)+"/yr";
+  $("sumSpend").textContent = fmtK(firstRet.spend)+"/yr at "+firstRet.age;
+  $("sumTax").textContent = (taxMode()===1 ? `Flat ${+S.taxPct}%` : taxMode()===2 ? "Standard order" : `Fill the ${brkRate(S.tax.fill)}% bracket order`) + ` · ${fmtK(firstRet.tax||0)} at ${firstRet.age}`;
+  const oth = (S.dst.on ? (+S.dst.income||0) : (+S.rental.income||0)) + S.income.reduce((s,r)=>s+(+r.amt||0),0);  // the DST replaces the rental
+  $("sumOther").textContent = oth? fmtK(oth)+"/yr" : "none yet";
+
+  guardRender(rows,res,base,firstRet);
+  document.querySelectorAll(".inflPct").forEach(e=>e.textContent=+S.market.infl);
+  fanChart(bands, rows);
+  survChart(rows,res,sims);
+  flowChart(rows);
+  yearTable(rows,bands,res,sims);
+  rothRender(rows);
+}
+
+/* SVG chart helpers */
+const W=640, H=316, M={l:56,r:12,t:12,b:46};
+function niceScale(v){ if(!(v>0)) v=1; const raw=v/4, p=Math.pow(10,Math.floor(Math.log10(raw)));
+  let step=10*p; for(const m of [1,2,2.5,5,10]) if(m*p>=raw){ step=m*p; break; }
+  const ticks=Math.max(1,Math.ceil(v/step-1e-9)); return {max:step*ticks, ticks}; }
+function axes(xs, yMax, yFmt, ticks=5){
+  const iw=W-M.l-M.r, ih=H-M.t-M.b;
+  const x0=xs[0], x1=xs[xs.length-1]||x0+1;
+  const X=a=>M.l+(x1===x0?0:(a-x0)/(x1-x0)*iw), Y=v=>M.t+ih-(v/yMax)*ih;
+  let g="";
+  for(let i=0;i<=ticks;i++){ const v=yMax*i/ticks, y=Y(v);
+    g+=`<line x1="${M.l}" x2="${W-M.r}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+    g+=`<text x="${M.l-6}" y="${y+4}" text-anchor="end">${yFmt(v)}</text>`; }
+  const step = (x1-x0)>30?5:(x1-x0)>12?2:1;
+  for(let a=Math.ceil(x0/step)*step;a<=x1;a+=step){ g+=`<text x="${X(a)}" y="${H-M.b+18}" text-anchor="middle">${a}</text>`; }
+  g+=`<text x="${M.l+iw/2}" y="${H-4}" text-anchor="middle">Your age</text>`;
+  return {X,Y,g,iw,ih};
+}
+// Each holding is linked to an account in the Accounts box (h.aid). Names and types come from there.
+function acctById(id){ return id ? S.accounts.find(a=>a.id===id) : null; }
+function holdKey(h){ return acctById(h.aid) ? h.aid : "?"+(h.acct||""); }   // unlinked holdings group by their old name
+function holdAcctType(h){ const a=acctById(h.aid); return a ? a.type : holdType(h.acct); }
+// Best Accounts match for an old holdings account name: same name, else most shared words (same type and closer balance break ties)
+function bestAccount(name, total){
+  const norm=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]/g,""), words=x=>String(x||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w=>w && !["the","and","of","account","acct"].includes(w));
+  const ex=S.accounts.find(a=>norm(a.name)===norm(name)); if(ex) return ex;
+  const W=words(name), ty=holdType(name); let best=null, bs=0;
+  S.accounts.forEach(a=>{ const aw=words(a.name); let sc=W.filter(w=>aw.includes(w)).length; if(!sc) return;
+    if(a.type===ty) sc+=0.5; sc-=0.4*Math.abs((+a.bal||0)-total)/Math.max(1,(+a.bal||0)+total); if(sc>bs){ bs=sc; best=a; } });
+  return best;
+}
+// Give accounts an id, and link holdings that have never been linked
+function linkHoldings(){
+  S.accounts.forEach(a=>{ if(!a.id) a.id="a"+Math.random().toString(36).slice(2,9); });
+  const H=S.holdings||[], tot={}; H.forEach(h=>{ if(h.aid===undefined) tot[h.acct]=(tot[h.acct]||0)+(+h.amt||0); });
+  const pick={}; for(const n in tot){ const a=bestAccount(n, tot[n]); pick[n]=a ? a.id : null; }
+  H.forEach(h=>{ if(h.aid===undefined) h.aid=pick[h.acct]||null; });
+}
+// Holdings, grouped by account (largest first). Saved with your settings; not used by the Monte Carlo.
+function renderHoldings(){
+  linkHoldings();
+  const H=S.holdings||(S.holdings=[]), tb=$("holdTbl").querySelector("tbody"); tb.innerHTML="";
+  const groups={}; H.forEach(h=>{ const a=acctById(h.aid); if(a) h.acct=a.name; const k=holdKey(h); (groups[k]=groups[k]||[]).push(h); });
+  const sum=list=>list.reduce((s,h)=>s+(+h.amt||0),0);
+  const order=Object.keys(groups).sort((a,b)=>sum(groups[b])-sum(groups[a]));
+  order.forEach(k=>{
+    // Account heading: name and type from the Accounts box (change them there)
+    const hr=document.createElement("tr"); hr.className="hgrp";
+    const a=acctById(k), nameBox=document.createElement("div"); nameBox.className="hgrpname";
+    if(a) nameBox.innerHTML=`<span class="hacct">${esc(a.name)}</span><span class="htype">${tN(a.type)}</span>`;
+    else {
+      // Not linked (its account was removed, or no match was found): pick one from the Accounts box
+      nameBox.innerHTML=`<span class="hacct">${esc(k.slice(1)||"Unlinked holdings")}</span>`;
+      const sel=document.createElement("select"); sel.className="hlink";
+      sel.innerHTML=`<option value="">Link to an account…</option>`+S.accounts.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("");
+      sel.addEventListener("change",()=>{ if(!sel.value) return; groups[k].forEach(h=>h.aid=sel.value); changed(false); renderHoldings(); });
+      nameBox.append(sel);
+    }
+    const sub=td("","num"); sub.dataset.acct=k;
+    const c1=td(nameBox); c1.colSpan=3; hr.append(c1, sub, td("")); tb.appendChild(hr);
+    groups[k].slice().sort((a,b)=>(+b.amt||0)-(+a.amt||0)).forEach(h=>{
+      const tr=document.createElement("tr");
+      const tick=textInput(h.tick,v=>h.tick=v); tick.style.width="96px"; if(h.desc) tick.title=h.desc;
+      const amt=document.createElement("input"); amt.className="money"; amt.style.textAlign="right"; amt.value=Math.round(+h.amt||0).toLocaleString("en-US");
+      amt.addEventListener("input",()=>{ h.amt=num(amt.value); changed(false); holdTotals(); });
+      amt.addEventListener("blur",()=>{ amt.value=Math.round(num(amt.value)).toLocaleString("en-US"); });
+      const del=document.createElement("button"); del.className="x"; del.title="Remove"; del.textContent="×";
+      del.addEventListener("click",()=>{ H.splice(H.indexOf(h),1); changed(false); renderHoldings(); });
+      const grp=document.createElement("select"); grp.innerHTML=HOLD_GROUPS.map(g=>`<option value="${g}"${g===h.group?" selected":""}>${gN(g)}</option>`).join("");
+      grp.addEventListener("change",()=>{ h.group=grp.value; changed(false); holdTotals(); });
+      tr.append(td(""), td(tick), td(grp), td(amt,"num"), td(del)); tb.appendChild(tr);
+    });
+  });
+  const tr=document.createElement("tr"); tr.className="htot"; const c=td("Total"); c.colSpan=3; const t=td("","num"); t.id="holdTotal"; tr.append(c,t,td("")); tb.appendChild(tr);
+  // "Add to" list for the + button: every account in the Accounts box
+  const keep=$("holdAcct").value;
+  $("holdAcct").innerHTML = S.accounts.map(x=>`<option value="${x.id}"${x.id===keep?" selected":""}>${esc(x.name)}</option>`).join("");
+  holdTotals();
+}
+// Target mix: saved with your settings; starts from the defaults in GROUP_TARGETS
+function targets(){ if(!S.targets) S.targets=Object.assign({}, GROUP_TARGETS); return S.targets; }
+function targetSum(){ const T=targets(); return HOLD_GROUPS.reduce((a,k)=>a+(+T[k]||0),0); }
+// Rebalance helper: how many dollars each group is above or below its target, and which moves fix it
+function rebalance(now, tot){
+  const T=targets(), keys=HOLD_GROUPS, tbl=$("rebalTbl"), tol=tot*0.01, ts=targetSum();
+  // Build the table once (inputs keep focus while you type), then only update the numbers
+  if(!tbl.dataset.built){
+    let h=`<thead><tr><th>Group</th><th class="num">Today</th><th class="num">Target</th><th class="num">To get there</th></tr></thead><tbody>`;
+    keys.forEach(k=>{ h+=`<tr><td><span class="sw" style="background:${GROUP_COLORS[k]};vertical-align:middle;margin-right:6px"></span>${gN(k)}</td><td class="num" id="rb-now-${k}"></td><td class="num" id="rb-tgt-${k}"></td><td class="num" id="rb-act-${k}"></td></tr>`; });
+    h+=`<tr class="tot"><td>Total</td><td class="num" id="rb-now-tot"></td><td class="num" id="rb-tgt-tot"></td><td></td></tr></tbody>`;
+    tbl.innerHTML=h; tbl.dataset.built="1";
+  }
+  const pc=v=>tot?(v/tot*100).toFixed(1)+"%":"–";
+  const want={}, diff={}; keys.forEach(k=>{ want[k]=ts?tot*(+T[k]||0)/ts:0; diff[k]=want[k]-(now[k]||0); });
+  keys.forEach(k=>{ const d=diff[k];
+    $(`rb-now-${k}`).innerHTML=`${fmt$(now[k]||0)}<small>${pc(now[k]||0)}</small>`;
+    $(`rb-tgt-${k}`).innerHTML=`${fmt$(want[k])}<small>${+(+T[k]||0).toFixed(1)}%</small>`;
+    $(`rb-act-${k}`).innerHTML = !tot ? "" : Math.abs(d)<tol ? `<span style="color:var(--muted)">On target</span>` : d>0 ? `<span class="buy">Add ${fmt$(d)}</span>` : `<span class="sell">Sell ${fmt$(-d)}</span>`; });
+  $("rb-now-tot").textContent=fmt$(tot); $("rb-tgt-tot").textContent=fmt$(tot);
+  const off=Math.abs(ts-100)>0.01;
+  const warn = off ? `<div class="warnbox">Targets add up to ${+ts.toFixed(1)}%, not 100%. They're scaled to 100% for the dollar amounts.</div>` : "";
+  $("tgtWarn").innerHTML = warn;
+  if(!tot){ $("rebalMoves").innerHTML='<p class="note">Add holdings to see how to rebalance.</p>'; return; }
+  // Pair the biggest sells with the biggest buys
+  const sells=keys.filter(k=>diff[k]<=-tol).map(k=>({k,v:-diff[k]})).sort((a,b)=>b.v-a.v);
+  const buys=keys.filter(k=>diff[k]>=tol).map(k=>({k,v:diff[k]})).sort((a,b)=>b.v-a.v);
+  const moves=[]; let i=0, j=0;
+  while(i<sells.length && j<buys.length){ const m=Math.min(sells[i].v, buys[j].v);
+    if(m>=tol/2) moves.push(`Move <b>${fmt$(m)}</b> from ${gN(sells[i].k)} to ${gN(buys[j].k)}`);
+    sells[i].v-=m; buys[j].v-=m; if(sells[i].v<1) i++; if(buys[j].v<1) j++; }
+  $("rebalMoves").innerHTML = (moves.length ? `<b>Suggested moves</b><ul>${moves.map(m=>`<li>${m}</li>`).join("")}</ul>` : `<b>You're within 1% of your target in every group.</b> No moves needed.`);
+}
+// Display names for groups and account types (S.names). Logic always uses the original name as the key.
+function gN(k){ const v=((S.names||{}).groups||{})[k]; return esc(v&&v.trim()?v.trim():(DEFAULT_GROUPS.some(d=>d.k===k)?k:"New group")); }
+function tN(k){ return k==="Traditional" ? "Tax Deferred" : esc(k); }  // account types are fixed; "Traditional" is the saved key
+function renderNames(){
+  const box=(id, keys, colors, kind)=>{ const el=$(id); el.innerHTML="";
+    keys.forEach(k=>{ const r=document.createElement("div"); r.className="nmrow";
+      const i=document.createElement("input"); i.placeholder=k; i.value=((S.names||{})[kind]||{})[k]||""; i.setAttribute("aria-label", k+" name");
+      i.addEventListener("input",()=>{ S.names=S.names||{}; (S.names[kind]=S.names[kind]||{})[k]=i.value; if(!i.value.trim()) delete S.names[kind][k]; changed(false); });
+      i.addEventListener("change",()=>namesChanged());
+      r.innerHTML=`<span class="sw" style="background:${colors[k]}"></span>`; r.append(i); el.appendChild(r); }); };
+  box("groupNames", HOLD_GROUPS, GROUP_COLORS, "groups");
+  // Groups: kind picker and remove button on each row, then + Add group
+  const gEl=$("groupNames");
+  [...gEl.querySelectorAll(".nmrow")].forEach((r,i)=>{ const d=groupDefs()[i]; if(!d) return;
+    const inp=r.querySelector("input"); if(!DEFAULT_GROUPS.some(x=>x.k===d.k)) inp.placeholder="New group";
+    const kind=document.createElement("select"); kind.title="Kind: Bonds and Cash groups count as safe money";
+    kind.innerHTML=GROUP_KINDS.map(t=>`<option${t===d.kind?" selected":""}>${t}</option>`).join("");
+    kind.addEventListener("change",()=>{ d.kind=kind.value; changed(false); namesChanged(); });
+    const del=document.createElement("button"); del.className="x"; del.textContent="×"; del.title="Remove this group";
+    del.disabled=HOLD_GROUPS.length<=1; del.addEventListener("click",()=>removeGroup(d.k));
+    r.append(kind, del); });
+  const add=document.createElement("button"); add.className="btn"; add.textContent="+ Add group"; add.style.marginTop="4px";
+  add.disabled=HOLD_GROUPS.length>=GROUP_PALETTE.length; if(add.disabled) add.title="Up to "+GROUP_PALETTE.length+" groups";
+  add.addEventListener("click",addGroup); gEl.appendChild(add);
+}
+function addGroup(){
+  const D=groupDefs(); if(D.length>=GROUP_PALETTE.length) return;
+  const used=new Set(D.map(d=>d.c)); let c=0; while(used.has(c)) c++;
+  const k="grp-"+Date.now().toString(36);
+  D.push({k, kind:"Stocks", c}); S.names=S.names||{}; (S.names.groups=S.names.groups||{})[k]="New group";
+  changed(false); namesChanged();
+  const ins=$("groupNames").querySelectorAll("input"); const last=ins[ins.length-1]; if(last){ last.focus(); last.select(); }
+}
+function removeGroup(k){
+  const D=groupDefs(); if(D.length<=1) return;
+  const others=D.filter(d=>d.k!==k), recv=(others.find(d=>d.kind===gKind(k))||others[0]).k;
+  const H=(S.holdings||[]).filter(h=>h.group===k), amt=H.reduce((a,h)=>a+(+h.amt||0),0);
+  if(!confirm(`Remove the ${gN(k)} group? ` + (H.length?`Its ${H.length} holding${H.length===1?"":"s"} (${fmt$(amt)}), target % and withdrawal plan % move to ${gN(recv)}.`:`Its target % and withdrawal plan % move to ${gN(recv)}.`))) return;
+  H.forEach(h=>h.group=recv);
+  const T=targets(); T[recv]=(+T[recv]||0)+(+T[k]||0); delete T[k];
+  const R=(S.wd||{}).rules||{}; for(const col in R){ R[col][recv]=(+R[col][recv]||0)+(+R[col][k]||0); delete R[col][k]; }
+  if(S.names&&S.names.groups) delete S.names.groups[k];
+  S.groupDefs=others; changed(false); namesChanged();
+}
+// Redraw everything that shows a name
+function namesChanged(){ delete $("rebalTbl").dataset.built; renderTables(); run(); }
+// Account type for each Holdings account: set on its heading row, or guessed from the name
+const ACCT_TYPES=["Traditional","Roth","Brokerage","Cash"];
+function holdType(acct){
+  const t=(S.holdTypes||{})[acct]; if(ACCT_TYPES.includes(t)) return t;
+  if(/roth/i.test(acct)) return "Roth";
+  if(/brokerage|individual|taxable|joint/i.test(acct)) return "Brokerage";
+  if(/cash|mec|whole life|savings|money market|checking/i.test(acct)) return "Cash";
+  return "Traditional";
+}
+// Update account subtotals and the total without redrawing (so typing isn't interrupted)
+function holdTotals(){
+  const H=S.holdings||[], by={}; H.forEach(h=>{ const k=holdKey(h); by[k]=(by[k]||0)+(+h.amt||0); });
+  document.querySelectorAll("#holdTbl td[data-acct]").forEach(c=>c.textContent=fmt$(by[c.dataset.acct]||0));
+  const tot=H.reduce((s,h)=>s+(+h.amt||0),0);
+  if($("holdTotal")) $("holdTotal").textContent=fmt$(tot);
+  $("sumHold").textContent=fmtK(tot);
+  // Group chart
+  // Group totals, split by account type
+  const g={}, byT={}; HOLD_GROUPS.forEach(k=>{ g[k]=0; byT[k]={}; ACCT_TYPES.forEach(t=>byT[k][t]=0); });
+  H.forEach(h=>{ const k=h.group||"Foundational", a=+h.amt||0, t=holdAcctType(h); g[k]=(g[k]||0)+a; (byT[k]=byT[k]||{})[t]=(byT[k][t]||0)+a; });
+  drawPie($("holdPieWrap"), HOLD_GROUPS, GROUP_COLORS, g, "Holdings by group", null, {types:ACCT_TYPES, by:byT, names:tN}, gN);
+  // Target mix at retirement, including cash. Dollars = target % of today's total holdings.
+  const T=targets(), ts=targetSum()||1, tg={}; HOLD_GROUPS.forEach(k=>tg[k]=tot*(+T[k]||0)/ts);
+  drawPie($("holdTargetWrap"), HOLD_GROUPS, GROUP_COLORS, tg, "Target mix at retirement", {pcts:T, onInput:(k,v,pos)=>{
+    T[k]=num(v); changed(false); holdTotals();
+    // The table was redrawn: put the cursor back where it was
+    const i=$("holdTargetWrap").querySelector(`input[data-k="${k}"]`); if(i){ i.value=v; i.focus(); try{ i.setSelectionRange(pos,pos); }catch(e){} } }}, null, gN);
+  rebalance(g, tot);
+  $("holdTargetNote").innerHTML=`Click a percentage in the table next to the chart to change it. The chart, dollar amounts and rebalance moves update as you type, and your targets are saved with your settings. ` + `An example target mix for retirement. The dollar amounts show what each group would hold at these targets using today's total of ${fmt$(tot)}, so you can compare them with the Today chart above.`;
+}
+// Pie of balances by account type, with a legend table that doubles as the data view
+const PIE_COLORS={Traditional:"var(--c-trad)",Roth:"var(--c-roth)",Brokerage:"var(--c-brok)",Cash:"var(--c-cash)"};
+function pieChart(bk){ drawPie($("pieWrap"), Object.keys(PIE_COLORS), PIE_COLORS, bk, "Savings by account type", null, null, tN); }
+// Holding groups, in the order they're listed; colors follow the group, not its size
+// Holding groups come from S.groupDefs (add, remove, rename on Your Money). These two are kept in sync by syncGroups().
+const HOLD_GROUPS=["Growth","Foundational","Dividends","Bonds","Cash"];
+const GROUP_PALETTE=["var(--c-trad)","var(--c-roth)","var(--c-brok)","var(--c-5)","var(--c-cash)","var(--c-6)","var(--c-7)","var(--c-8)"];
+const GROUP_KINDS=["Stocks","Bonds","Cash"];
+const DEFAULT_GROUPS=[{k:"Growth",kind:"Stocks",c:2},{k:"Foundational",kind:"Stocks",c:0},{k:"Dividends",kind:"Stocks",c:1},{k:"Bonds",kind:"Bonds",c:3},{k:"Cash",kind:"Cash",c:4}];
+function groupDefs(){ if(!Array.isArray(S.groupDefs)||!S.groupDefs.length) S.groupDefs=clone(DEFAULT_GROUPS); return S.groupDefs; }
+function gKind(k){ const d=groupDefs().find(d=>d.k===k); return d?d.kind:"Stocks"; }
+function syncGroups(){
+  const D=groupDefs(); HOLD_GROUPS.splice(0, HOLD_GROUPS.length, ...D.map(d=>d.k));
+  for(const k in GROUP_COLORS) delete GROUP_COLORS[k]; D.forEach(d=>GROUP_COLORS[d.k]=GROUP_PALETTE[d.c]||"var(--muted)");
+  (S.holdings||[]).forEach(h=>{ if(!HOLD_GROUPS.includes(h.group)) h.group=HOLD_GROUPS[0]; });
+  const rb=$("rebalTbl"); if(rb) delete rb.dataset.built;
+}
+const GROUP_TARGETS={Foundational:40,Dividends:20,Growth:15,Bonds:15,Cash:10};  // example target mix at retirement (edit to taste)
+const GROUP_COLORS={Foundational:"var(--c-trad)",Dividends:"var(--c-roth)",Growth:"var(--c-brok)",Bonds:"var(--c-5)",Cash:"var(--c-cash)"};
+// Pie with a legend table (percent and dollars) that doubles as the data view
+function drawPie(wrap, keys, colors, vals, label, edit, split, names){
+  const nm=names||(k=>k);
+  wrap.classList.remove("hl");  // clear any hover highlight left from before a redraw
+  const w={}; keys.forEach(k=>w[k]=Math.max(0, edit ? +edit.pcts[k]||0 : vals[k]||0));
+  const tot=keys.reduce((s,k)=>s+w[k],0), dol=keys.reduce((s,k)=>s+Math.max(0,vals[k]||0),0);
+  if(!tot && !edit){ wrap.innerHTML='<p class="note">Add amounts to see the chart.</p>'; return; }
+  const R=100, C=110; let a0=-Math.PI/2, paths="";
+  keys.forEach(k=>{ const v=w[k]; if(!v) return;
+    const a1=a0+v/tot*2*Math.PI, big=(a1-a0)>Math.PI?1:0;
+    const d = v>=tot ? `M${C},${C-R}A${R},${R} 0 1 1 ${C-0.01},${C-R}Z`
+      : `M${C},${C}L${C+R*Math.cos(a0)},${C+R*Math.sin(a0)}A${R},${R} 0 ${big} 1 ${C+R*Math.cos(a1)},${C+R*Math.sin(a1)}Z`;
+    paths+=`<path d="${d}" fill="${colors[k]}" stroke="var(--surface)" stroke-width="2" stroke-linejoin="round" data-k="${k}"/>`;
+    a0=a1; });
+  const pct=k=>edit ? +edit.pcts[k]||0 : (tot?w[k]/tot*100:0);
+  const pcell=k=>edit ? `<input class="pctIn" data-k="${k}" inputmode="decimal" value="${+edit.pcts[k]||0}" aria-label="${nm(k)} target percent">%` : `${pct(k).toFixed(1)}%`;
+  // Optional: split each row by account type (columns), with Total last
+  const sc=k=>split ? split.types.map(t=>{ const v=(split.by[k]||{})[t]||0; return `<td class="num">${v?fmt$(v):'<span style="color:var(--muted)">–</span>'}</td>`; }).join("") : "";
+  const head=split ? `<thead><tr><th>Group</th><th>%</th>${split.types.map(t=>`<th>${split.names?split.names(t):t}</th>`).join("")}<th>Total</th></tr></thead>` : "";
+  const scTot=split ? split.types.map(t=>`<td class="num">${fmt$(keys.reduce((a,k)=>a+((split.by[k]||{})[t]||0),0))}</td>`).join("") : "";
+  const rows=keys.map(k=>`<tr data-k="${k}"><td><span class="sw" style="background:${colors[k]}"></span> ${nm(k)}</td><td class="num">${pcell(k)}</td>${sc(k)}<td class="num">${fmt$(vals[k]||0)}</td></tr>`).join("");
+  const off=edit && Math.abs(tot-100)>0.01;
+  wrap.innerHTML=`<svg viewBox="0 0 220 220" role="img" aria-label="${label}">${paths}</svg>
+    <table class="pieLeg${split?" wide":""}">${head}<tbody>${rows}<tr class="tot"><td>Total</td><td class="num${off?" off":""}">${edit?+tot.toFixed(1):100}%</td>${scTot}<td class="num">${fmt$(dol)}</td></tr></tbody></table><div class="tip"></div>`;
+  if(edit) wrap.querySelectorAll("input.pctIn").forEach(i=>i.addEventListener("input",()=>edit.onInput(i.dataset.k, i.value, i.selectionStart)));
+  // Hover a slice or a legend row to highlight it and show the amount
+  const tip=wrap.querySelector(".tip");
+  const show=(k,e)=>{ wrap.classList.add("hl"); wrap.querySelectorAll("path").forEach(p=>p.classList.toggle("on",p.dataset.k===k));
+    if(e){ const r=wrap.getBoundingClientRect(); tip.innerHTML=`${nm(k)}<br><b>${fmt$(vals[k]||0)}</b> · ${pct(k).toFixed(1)}%`; tip.style.display="block";
+      tip.style.left=(e.clientX-r.left+12)+"px"; tip.style.top=(e.clientY-r.top+12)+"px"; } };
+  const hide=()=>{ wrap.classList.remove("hl"); tip.style.display="none"; };
+  wrap.querySelectorAll("path").forEach(p=>{ p.addEventListener("mousemove",e=>show(p.dataset.k,e)); p.addEventListener("mouseleave",hide); });
+  wrap.querySelectorAll(".pieLeg tr[data-k]").forEach(r=>{ r.addEventListener("mouseenter",()=>show(r.dataset.k)); r.addEventListener("mouseleave",hide); });
+}
+function hover(container, xs, X, html){
+  const svg=container.querySelector("svg"), tip=container.querySelector(".tip"), cross=svg.querySelector(".cross");
+  const move=e=>{
+    const r=svg.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*W;
+    let best=0,bd=1e9; xs.forEach((a,i)=>{const d=Math.abs(X(a)-px); if(d<bd){bd=d;best=i;}});
+    const cx=X(xs[best]); cross.setAttribute("x1",cx); cross.setAttribute("x2",cx); cross.style.display="";
+    tip.innerHTML=html(best); tip.style.display="block";
+    const left=cx/W*r.width; const tw=tip.offsetWidth;
+    tip.style.left=Math.min(Math.max(0,left+12), r.width-tw)+"px"; tip.style.top="8px";
+    if(left+12+tw>r.width) tip.style.left=Math.max(0,left-tw-12)+"px";
+  };
+  svg.addEventListener("mousemove",move);
+  svg.addEventListener("mouseleave",()=>{tip.style.display="none";cross.style.display="none";});
+}
+function fanChart(b, rows){
+  const el=$("fanChart"); const xs=b.map(d=>d.age);
+  const sc=niceScale(Math.max(...b.map(d=>d.p90),1));
+  const {X,Y,g}=axes(xs,sc.max,fmtK,sc.ticks);
+  const area=(hiK,loK)=>"M"+b.map(d=>`${X(d.age)},${Y(d[hiK])}`).join("L")+"L"+b.slice().reverse().map(d=>`${X(d.age)},${Y(d[loK])}`).join("L")+"Z";
+  const line="M"+b.map(d=>`${X(d.age)},${Y(d.p50)}`).join("L");
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio balance percentiles by age">${g}
+    <path d="${area("p90","p10")}" fill="var(--band-outer)"/>
+    <path d="${area("p75","p25")}" fill="var(--band-inner)"/>
+    <path d="${line}" fill="none" stroke="var(--line)" stroke-width="2.5" stroke-linejoin="round"/>
+    <line class="cross" y1="${M.t}" y2="${H-M.b}" stroke="var(--text-2)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
+    <rect x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  hover(el,xs,X,i=>{const d=b[i]; return `<div style="margin-bottom:3px">End of year: ${who(d.age, rows[i].jAge)}</div>
+    Great (90th): <b>${fmtK(d.p90)}</b><br>Good (75th): <b>${fmtK(d.p75)}</b><br>Typical: <b>${fmtK(d.p50)}</b><br>Poor (25th): <b>${fmtK(d.p25)}</b><br>Bad (10th): <b>${fmtK(d.p10)}</b>`;});
+}
+function survChart(rows,res,sims){
+  const el=$("survChart"); const xs=rows.map(r=>r.age); const v=Array.from(res.alive).map(a=>a/sims*100);
+  const {X,Y,g}=axes(xs,100,x=>x+"%",4);
+  const t=S.market.target;
+  const line="M"+xs.map((a,i)=>`${X(a)},${Y(v[i])}`).join("L");
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chance money lasts by age">${g}
+    <line x1="${M.l}" x2="${W-M.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--muted)" stroke-dasharray="4 4"/>
+    <text x="${W-M.r}" y="${Y(t)-5}" text-anchor="end">${t}% target</text>
+    <path d="${line}" fill="none" stroke="var(--s1)" stroke-width="2.5" stroke-linejoin="round"/>
+    <line class="cross" y1="${M.t}" y2="${H-M.b}" stroke="var(--text-2)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
+    <rect x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  hover(el,xs,X,i=>`${who(xs[i], rows[i].jAge)}: money still there in <b>${v[i].toFixed(1)}%</b> of simulations`);
+}
+function flowChart(rows){
+  const el=$("flowChart"); const xs=rows.map(r=>r.age);
+  const sc=niceScale(Math.max(...rows.map(r=>Math.max(r.spend,r.income)),1));
+  const {X,Y,g}=axes(xs,sc.max,fmtK,sc.ticks);
+  const step=(key)=>{ let d=""; rows.forEach((r,i)=>{ const x0=X(r.age)-(i?(X(r.age)-X(rows[i-1].age))/2:0); const x1=i<rows.length-1?(X(r.age)+X(rows[i+1].age))/2:X(r.age); d+=(i?"L":"M")+`${x0},${Y(r[key])}L${x1},${Y(r[key])}`; }); return d; };
+  const last=rows[rows.length-1];
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Spending and income by age">${g}
+    <path d="${step("spend")}" fill="none" stroke="var(--s2)" stroke-width="2.5"/>
+    <path d="${step("income")}" fill="none" stroke="var(--s1)" stroke-width="2.5"/>
+    <line class="cross" y1="${M.t}" y2="${H-M.b}" stroke="var(--text-2)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
+    <rect x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  hover(el,xs,X,i=>{const r=rows[i]; return `${who(r.age, r.jAge)} · ${r.phase}<br>${r.contrib?`Savings added: <b>${fmt$(r.contrib)}</b><br>`:""}Spending: <b>${fmt$(r.spend)}</b><br>Social Security: <b>${fmt$(r.pSS+r.jSS)}</b><br>Other income: <b>${fmt$(r.rent+r.other)}</b><br>From savings: <b>${fmt$(Math.max(0,r.net))}</b>${r.lump-r.homeLump?`<br>Rental sale adds: <b>${fmt$(r.lump-r.homeLump)}</b>`:""}${r.homeLump?`<br>${r.homeLump>0?"Downsizing adds":"Downsizing takes from savings"}: <b>${fmt$(Math.abs(r.homeLump))}</b>`:""}`;});
+}
+// Withdrawal plan for one age: split that year's "From savings" across holding groups for a down, flat or up market
+let lastRows=null;
+const pctTxt = v => (v>=99.95?"100":v.toFixed(v<10?1:0))+"%";
+// Status line under the rule of thumb: bp = success without any guardrail, now = with the checked box
+function guardStatus(bp, now, dot){
+  const G=S.guard, red=dot("var(--bad)"), grn=dot("var(--good)"), amb=dot("var(--warn)");
+  bp=Math.round(bp); now=Math.round(now);  // compare the same whole numbers that are shown
+  if(G.on){
+    const head=`With the ${G.cut}% cut, your plan is at ${pctTxt(now)} (${pctTxt(bp)} without it). `;
+    if(bp>=75) return amb+head+`Without the cut it's already at 75% or higher, so you may not need it.`;
+    if(now>=75) return grn+head+`The cut brings it back to 75% or higher.`;
+    return red+head+`Still below 75%. Try a bigger cut, or mark more lines as "Can cut".`;
+  }
+  if(G.raiseOn){
+    const head=`With the ${G.raise}% raise, your plan is at ${pctTxt(now)} (${pctTxt(bp)} without it). `;
+    if(bp<=95) return amb+head+`Without the raise it's not above 95%, so the raise may be too much.`;
+    if(now<75) return red+head+`That drops it below 75%. Try a smaller raise.`;
+    return grn+head+`There's room for the extra spending.`;
+  }
+  return bp<75 ? red+`Your plan is at ${pctTxt(bp)}, below 75%. Consider checking <i>Cut back</i>.`
+    : bp>95 ? grn+`Your plan is at ${pctTxt(bp)}, above 95%. You can check <i>Spend more</i>.`
+    : grn+`Your plan is at ${pctTxt(bp)}, between 75% and 95%. No guardrail needed.`;
+}
+// Guardrail note under Spending, and the results card comparing with and without the change
+function guardRender(rows,res,base,firstRet){
+  const G=S.guard, gm=guardMult(), fl=firstRet.flex||0, on=gm!==0;
+  const word = G.on ? "cut" : "raise", pc = G.on ? G.cut : G.raise;
+  $("gNote").innerHTML = `Your "Can cut" lines come to <b>${fmt$(fl)}</b> a year at ${firstRet.age} (including tax), about ${firstRet.spend?Math.round(fl/(firstRet.spend-firstRet.flexAdj)*100):0}% of spending. ` +
+    `Check one box to lower or raise them in every retirement year. The Spending column in the Year-by-year table, the Withdrawal plan and the Monte Carlo all use the adjusted amount. Only one box can be checked at a time.`;
+  // Which box to use, based on the plan's success rate without any guardrail
+  const bp=base.success*100;
+  const dot=c=>`<i class="dot" style="background:${c};display:inline-block;margin-right:6px;vertical-align:middle"></i>`;
+  $("gHint").innerHTML = `Rule of thumb: if the plan's success rate is below 75%, check <i>Cut back</i>. If it's above 95%, you can check <i>Spend more</i>. In between, leave both unchecked.<br>` +
+    guardStatus(bp, res.success*100, dot);
+  const card=$("guardCard");
+  if(!on){ card.style.display="none"; return; }
+  card.style.display="";
+  const st=[
+    [`Success with ${pc}% ${word}`, pctTxt(res.success*100)],
+    ["Without it", pctTxt(base.success*100)],
+    [`Change at ${firstRet.age}`, `${firstRet.flexAdj<0?"−":"+"}${fmt$(Math.abs(firstRet.flexAdj))}/yr<div class="note" style="margin:0">${pc}% of ${fmt$(fl)} "Can cut"</div>`],
+  ];
+  $("guardStats").innerHTML = st.map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+  const d=(res.success-base.success)*100;
+  $("guardNote").innerHTML = `"Can cut" spending is ${G.on?"lowered":"raised"} ${pc}% in every retirement year. ` +
+    (Math.abs(d)<0.5 ? "That barely changes the success rate." : `That ${d>0?"raises":"lowers"} the success rate by about ${Math.round(Math.abs(d))} point${Math.round(Math.abs(d))===1?"":"s"}.`) +
+    ` Uncheck the box under Spending to go back to your budget as entered.`;
+}
+const WD_GROUPS=HOLD_GROUPS;  // same list, same order
+const WD_COLS=[["down","Down market","stocks fell 10%+"],["flat","Flat market","−10% to +10%"],["up","Up market","stocks rose 10%+"]];
+function wdRender(){
+  const rows=lastRows; if(!rows) return;
+  const W=S.wd, age=+W.age, row=rows.find(r=>r.age===age);
+  const need = row ? Math.max(0,row.net) : 0;
+  const cum=inflCum(rows.length), y=age-S.currentAge, f = row ? cum[Math.max(0,Math.min(y,rows.length))] : 1, nominal=need*f;
+  wdF=f;
+  if(!row) $("wdNeed").innerHTML=`Age ${age} is outside the plan (${S.currentAge}–${S.endAge}).`;
+  else if(age<S.retireAge) $("wdNeed").innerHTML=`At ${age} you're still working, so savings are added that year instead of withdrawn.`;
+  else if(need<=0) $("wdNeed").innerHTML=`At ${age} your income covers spending, so nothing comes out of savings. Extra income could refill cash.`;
+  else $("wdNeed").innerHTML=`At ${age} you take <b>${fmt$(need)}</b> from savings in today's dollars` + (f>1.0005?` <span class="nom">(about <b>${fmt$(nominal)}</b> in that year's dollars)</span>.`:".");
+  let h=`<thead><tr><th>Group</th>${WD_COLS.map(([k,t,sub])=>`<th class="num">${t}<small>${sub}</small></th>`).join("")}</tr></thead><tbody>`;
+  WD_GROUPS.forEach(g=>{ h+=`<tr><td><span class="sw" style="background:${GROUP_COLORS[g]}"></span> ${gN(g)}</td>`+
+    WD_COLS.map(([k])=>`<td class="cell"><input type="number" min="0" max="100" data-k="${k}" data-g="${g}" value="${+W.rules[k][g]||0}">%<span class="amt" id="wd-${k}-${g}"></span></td>`).join("")+`</tr>`; });
+  h+=`<tr class="tot"><td>Total</td>${WD_COLS.map(([k])=>`<td class="num" id="wd-tot-${k}"></td>`).join("")}</tr></tbody>`;
+  $("wdTbl").innerHTML=h;
+  $("wdTbl").querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{ W.rules[i.dataset.k][i.dataset.g]=num(i.value); changed(false); wdAmounts(need); }));
+  wdAmounts(need);
+  // How long today's cash and bonds would cover this withdrawal in a down market
+  const safe=wdHave();
+  $("wdCover").innerHTML = need>0 ? `Your ${fmt$(safe)} in cash and bonds would cover about <b>${(safe/need).toFixed(1)} years</b> of this withdrawal without selling stocks. Many plans aim for 2–3 years.` : "";
+}
+let wdF=1;
+// Today's dollars, with that year's dollars in parentheses when they differ
+const wd$ = v => fmt$(v) + (wdF>1.0005 ? ` <span class="nom">(${fmt$(v*wdF)})</span>` : "");
+function wdAmounts(need){
+  const W=S.wd; let bad=[];
+  WD_COLS.forEach(([k,t])=>{ let tot=0;
+    WD_GROUPS.forEach(g=>{ const pct=+W.rules[k][g]||0; tot+=pct; $(`wd-${k}-${g}`).innerHTML = pct? wd$(need*pct/100) : "–"; });
+    $(`wd-tot-${k}`).innerHTML=`${tot}%<span class="amt" style="display:block;font-weight:600">${wd$(need*tot/100)}</span>`;
+    if(Math.abs(tot-100)>0.01) bad.push(`${t} adds up to ${tot}%`); });
+  wdRefill(need);
+  $("wdWarn").innerHTML = bad.length ? `<div class="warnbox">${bad.join(". ")}. Each column should add up to 100%.</div>` : "";
+}
+// Cash + bonds on hand: today's Cash and Bonds holdings
+function wdHave(){
+  let t=0; (S.holdings||[]).forEach(x=>{ if(gKind(x.group)!=="Stocks") t+=+x.amt||0; }); return t;
+}
+// Up year: sell a bit extra from the stock groups to top cash + bonds back up to the target years
+function wdRefill(need){
+  const el=$("wdRefill"); if(!el) return;
+  $("wdHave").value=Math.round(wdHave()).toLocaleString("en-US");
+  $("wdNeedYrs").value = need>0 ? Math.round((+S.wd.years||0)*need).toLocaleString("en-US") : "–";
+  if(need<=0){ el.innerHTML='<p class="note">No withdrawal this year, so nothing to refill. Any extra income can go to cash.</p>'; return; }
+  const yrs=+S.wd.years||0, target=yrs*need, have=wdHave(), gap=Math.max(0,target-have);
+  if(!gap){ el.innerHTML=`Goal: ${yrs} year${yrs===1?"":"s"} of withdrawals in cash and bonds = ${wd$(target)}. You have ${fmt$(have)}, about ${(have/need).toFixed(1)} years. <b>No refill needed.</b>`; return; }
+  const R=S.wd.rules, sellG=WD_GROUPS.filter(g=>gKind(g)==="Stocks" && (+R.up[g]||0)>0), sellTot=sellG.reduce((a,g)=>a+(+R.up[g]||0),0)||1;
+  // Refill split between Cash-kind and Bonds-kind groups, in the same ratio as the down-market column
+  const cashG=WD_GROUPS.filter(g=>gKind(g)==="Cash"), bondG=WD_GROUPS.filter(g=>gKind(g)==="Bonds");
+  const dC=cashG.reduce((a,g)=>a+(+R.down[g]||0),0), dB=bondG.reduce((a,g)=>a+(+R.down[g]||0),0);
+  const cashShare=!bondG.length?1:!cashG.length?0:(dC+dB?dC/(dC+dB):0.5);
+  const into=!cashG.length&&!bondG.length ? "Keep it as cash." : "Put "+[cashShare>0?`${wd$(gap*cashShare)} into ${cashG.map(gN).join(" / ")}`:"", cashShare<1?`${wd$(gap*(1-cashShare))} into ${bondG.map(gN).join(" / ")}`:""].filter(Boolean).join(" and ")+".";
+  const sells=sellG.map(g=>`${wd$(gap*(+R.up[g]||0)/sellTot)} from ${gN(g)}`).join(" and ");
+  el.innerHTML=`Goal: ${yrs} year${yrs===1?"":"s"} of withdrawals in cash and bonds = ${wd$(target)}. You have ${fmt$(have)}, about ${(have/need).toFixed(1)} years.<br>
+    In an <b>up year</b>, sell an extra <b>${wd$(gap)}</b>: ${sells}. ${into}<br>
+    Total sold from stocks that year: <b>${wd$(need+gap)}</b> (the withdrawal plus the refill).`;
+}
+// Hover text for a Tax cell: which option is checked and how that year's tax was worked out
+function taxTip(r){
+  const m=taxMode();
+  if(m===1) return `Flat tax (checked under Taxes): ${+S.taxPct}% of ${fmt$(r.before)} spending = ${fmt$(r.tax)}`;
+  const q=r.taxInfo||{}, P=q.parts||{}, L=[`${m===2?"Standard order":`Fill the ${brkRate(S.tax.fill)}% bracket order`} (checked under Taxes): ${fmt$(r.tax)} on a typical market path`];
+  if(q.w>0.5) L.push(`From Tax Deferred: ${fmt$(q.w)}${q.rmd>0.5?` (RMD ${fmt$(q.rmd)})`:""}`);
+  if(q.conv>0.5) L.push(`Roth conversion: ${fmt$(q.conv)}`);
+  if(P.tss>0.5) L.push(`Taxable Social Security: ${fmt$(P.tss)}`);
+  L.push(`Federal tax on regular income: ${fmt$(P.fed||0)} (taxable income ${fmt$(P.ordTI||0)})`);
+  if(q.g>0.5) L.push(`Capital gains tax: ${fmt$(P.cg||0)} (on ${fmt$(q.g)} of Brokerage gains)`);
+  if(P.st>0.5) L.push(`State tax (${+S.roth.state}%): ${fmt$(P.st)}`);
+  if(q.pen>0.5) L.push(`10% penalty, Tax Deferred before 60: ${fmt$(q.pen)}`);
+  return L.join("\n");
+}
+function yearTable(rows,bands,res,sims){
+  lastRows=rows; wdRender();
+  let h=`<thead><tr><th>${S.spouse?"You":"Age"}</th><th class="spopt">Spouse</th><th>Phase</th><th class="num">Spending${S.guard.on?` <small>(${S.guard.cut}% cut)</small>`:S.guard.raiseOn?` <small>(${S.guard.raise}% raise)</small>`:""}</th><th class="num">Tax<small>${taxMode()===1?`Flat ${+S.taxPct}%`:taxMode()===2?"Standard order":`Fill the ${brkRate(S.tax.fill)}% bracket order`}</small></th><th class="num">Soc. Sec.</th><th class="num">Savings added</th><th class="num">Other inc.</th><th class="num">From savings</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{ const b=bands[i];
+    h+=`<tr><td>${r.age}</td><td class="spopt">${r.jAge}</td><td>${esc(r.phase)}</td><td class="num">${fmt$(r.before)}</td><td class="num"${(r.tax||0)>0.5?` title="${esc(taxTip(r))}" style="cursor:help"`:""}>${fmt$(r.tax||0)}</td><td class="num">${fmt$(r.pSS+r.jSS)}</td><td class="num">${fmt$(r.contrib)}</td><td class="num">${fmt$(r.rent+r.other+r.lump)}</td><td class="num">${fmt$(Math.max(0,r.net))}</td></tr>`; });
+  $("yearTbl").innerHTML=h+"</tbody>";
+}
+
+/* ---------------- Roth conversions ---------------- */
+// Federal brackets (taxable income), kept in today's dollars since they rise with inflation. Set by setFiling() from the Tax Brackets box.
+let RC_BRACKETS=[], RC_TOPS={}, RC_STD=0, RC_STD65=0;
+function setFiling(){
+  const B=S.brk, F=S.spouse?B.mfj:B.single, r=B.rates.map(x=>(+x||0)/100);
+  RC_BRACKETS=F.tops.map((t,i)=>[+t||0, r[i]]).concat([[Infinity, r[6]]]);
+  RC_TOPS={12:+F.tops[1]||0, 22:+F.tops[2]||0, 24:+F.tops[3]||0}; RC_STD=+F.std||0; RC_STD65=+F.std65||0;
+  LTCG0=+F.cg0||0; LTCG15=+F.cg15||0; LTCG_R=B.cgRates.map(x=>(+x||0)/100);
+  if(S.spouse){ SS_B1=32000; SS_B2=44000; } else { SS_B1=25000; SS_B2=34000; }
+}
+const RC_LEFT=0.22;  // tax rate assumed on Traditional money left at the end (paid by you later or your heirs)
+const RC_RMD={75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16.0,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
+// The bracket picked by key (12, 22 or 24 = 2nd, 3rd or 4th bracket) shown with its rate from the Tax Brackets box
+function brkRate(k){ const i={12:1,22:2,24:3}[+k]; return i==null ? +k : +S.brk.rates[i]; }
+function rcBracketTax(x){ let t=0, lo=0; for(const [hi,r] of RC_BRACKETS){ if(x<=lo) break; t+=(Math.min(x,hi)-lo)*r; lo=hi; } return t; }
+// Taxable part of Social Security (thresholds aren't indexed, so they shrink in today's dollars)
+function rcTaxSS(pi, ss, b1, b2){ if(ss<=0 || pi<=b1) return 0; if(pi<=b2) return Math.min(0.5*ss, 0.5*(pi-b1)); return Math.min(0.85*ss, 0.85*(pi-b2)+Math.min(0.5*ss, 0.5*(b2-b1))); }
+// Typical yearly return after inflation for the investment mix (average minus the drag from swings)
+function rcReturn(){
+  const m=S.market, tot=(S.alloc.stocks+S.alloc.bonds+S.alloc.cash)||1, ws=S.alloc.stocks/tot, wb=S.alloc.bonds/tot, wc=S.alloc.cash/tot;
+  const mean=ws*m.sMean/100+wb*m.bMean/100+wc*m.cMean/100-m.fee/100;
+  const sd=Math.sqrt(Math.pow(ws*m.sSd/100,2)+Math.pow(wb*m.bSd/100,2)+2*m.rho*ws*wb*m.sSd/100*m.bSd/100+Math.pow(wc*m.cSd/100,2));
+  return (1+mean-sd*sd/2)/(1+m.infl/100)-1;
+}
+// One typical path, with or without conversions, using the withdrawal order picked under Taxes (Standard order with a flat tax)
+function rothProject(rows, convert){
+  const m=taxMode(), P=taxProject(rows, m===1?2:m, convert), top=RC_TOPS[+S.roth.top]||RC_TOPS[22];
+  let life=0, late=0, convTot=0, convTax=0, firstRMD=0, T75=null, short=0;
+  const out=P.rows.map(r=>{
+    if(r.age===75){ T75=r.T0; firstRMD=r.rmd; }
+    if(r.age>=S.retireAge){ life+=r.tax; if(r.age>=75) late+=r.tax; }
+    convTot+=r.conv; convTax+=r.ctax; short+=r.short;
+    return {age:r.age, before:r.before, conv:r.conv, ctax:r.ctax, tax:r.tax, room:Math.max(0, top-r.before), rmd:r.rmd, T:r.T, Ro:r.Ro, capped:r.capped};
+  });
+  const [T,B,C,Ro]=P.end;
+  return {rows:out, life, late, convTot, convTax, T75:T75??T, firstRMD, Tend:T, Rend:Ro, Bend:B+C, short, net:Ro+B+C+T*(1-RC_LEFT)};
+}
+function rothRender(rows){
+  if(!$("rcChart")) return;
+  const R=S.roth, base=rothProject(rows,false), w=rothProject(rows,true), top=RC_TOPS[+R.top]||RC_TOPS[22];
+  const ret=w.rows.filter(r=>r.age>=S.retireAge);
+  if(!ret.length){ $("rcChart").innerHTML='<p class="note">Set a retirement age within the plan to see conversions.</p>'; return; }
+  // The low-income years: taxable income (before any conversion) inside the 12% bracket or lower
+  const low=base.rows.filter(r=>r.age>=S.retireAge && r.before<RC_TOPS[12]).map(r=>r.age), ranges=[];
+  low.forEach(a=>{ const last=ranges[ranges.length-1]; if(last && a===last[1]+1) last[1]=a; else ranges.push([a,a]); });
+  $("rcWindow").innerHTML = (ranges.length ? `Your lowest-tax years (taxable income under the ${brkRate(12)}% bracket top): ages ${ranges.map(([a,b])=>a===b?a:a+"–"+b).join(", ")}. ` : "") +
+    (w.convTot>0 ? `Suggested: convert about <b>${fmt$(w.convTot/Math.max(1,w.rows.filter(r=>r.conv>0).length))}</b> a year from ${R.from} to ${R.to}.` : "No room to convert with these settings.") +
+    (w.rows.some(r=>r.capped) ? ` <span style="font-weight:400;color:var(--text-2)">In some years your IRMAA limit (${fmt$(+R.irmaa)} of income, before the standard deduction) stops conversions below the ${brkRate(R.top)}% bracket top. Those years are marked * in the table.</span>` : "");
+  // Chart: income already (gray) + conversion (blue), with bracket tops
+  const xs=ret.map(r=>r.age), maxV=Math.max(...ret.map(r=>r.before+r.conv), top*1.08);
+  const sc=niceScale(maxV), {X,Y,g}=axes(xs,sc.max,fmtK,sc.ticks);
+  const bw=Math.max(3, (xs.length>1?(X(xs[1])-X(xs[0])):20)*0.7);
+  let bars=""; ret.forEach(r=>{ const x=X(r.age)-bw/2;
+    bars+=`<rect x="${x}" y="${Y(r.before)}" width="${bw}" height="${Math.max(0,Y(0)-Y(r.before))}" fill="var(--muted)" opacity=".45"/>`;
+    if(r.conv>0) bars+=`<rect x="${x}" y="${Y(r.before+r.conv)}" width="${bw}" height="${Math.max(0,Y(r.before)-Y(r.before+r.conv))}" fill="var(--c-trad)"/>`; });
+  let lines=""; for(const [k,v] of Object.entries(RC_TOPS)) if(v<=sc.max){ lines+=`<line x1="${M.l}" x2="${W-M.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--text-2)" stroke-width="${+k===+R.top?1.5:1}" stroke-dasharray="5 4" opacity="${+k===+R.top?1:.5}"/><text x="${W-M.r-4}" y="${Y(v)-4}" text-anchor="end">${brkRate(k)}% bracket top</text>`; }
+  // IRMAA limit from 63, shown as taxable income (the limit minus the standard deduction), so it steps down at 65
+  let irm="";
+  if(+R.irmaa>0){ const step=(xs.length>1?X(xs[1])-X(xs[0]):20)/2; let d="", lastY=null;
+    rows.forEach(r=>{ if(r.age<63 || r.age<xs[0]) return; const v=+R.irmaa-(RC_STD+RC_STD65*((r.age>=65)+(S.spouse&&r.jAge>=65))); if(v>sc.max) return;
+      const y=Y(Math.max(0,v)), x0=X(r.age)-step, x1=X(r.age)+step; d+= (d?`L${x0},${y}`:`M${x0},${y}`)+`L${x1},${y}`; lastY=y; });
+    if(d) irm=`<path d="${d}" fill="none" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="2 3"/><text x="${X(xs[xs.length-1])}" y="${lastY+14}" text-anchor="end" fill="var(--warn)">IRMAA limit</text>`; }
+  $("rcChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Taxable income and Roth conversions by age">${g}${bars}${lines}${irm}
+    <line class="cross" y1="${M.t}" y2="${H-M.b}" stroke="var(--text-2)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
+    <rect x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/></svg><div class="tip"></div>`;
+  hover($("rcChart"), xs, X, i=>{ const r=ret[i]; return `Age <b>${r.age}</b><br>Income already: <b>${fmt$(r.before)}</b>${r.conv?`<br>Convert: <b>${fmt$(r.conv)}</b><br>Tax on it: <b>${fmt$(r.ctax)}</b>`:""}${r.rmd>0.5?`<br>RMD: <b>${fmt$(r.rmd)}</b>`:""}`; });
+  // Table: conversion years only
+  const cy=ret.filter(r=>r.conv>0);
+  $("rcTbl").innerHTML = cy.length ? `<thead><tr><th>Age</th><th class="num">Taxable income already</th><th class="num">Room in bracket</th><th class="num">Convert</th><th class="num">Tax on conversion</th></tr></thead><tbody>` +
+    cy.map(r=>`<tr><td>${r.age}</td><td class="num">${fmt$(r.before)}</td><td class="num">${fmt$(r.room)}</td><td class="num"><b>${fmt$(r.conv)}</b>${r.capped?" *":""}</td><td class="num">${fmt$(r.ctax)}</td></tr>`).join("") +
+    `<tr class="tot"><td>Total</td><td></td><td></td><td class="num"><b>${fmt$(w.convTot)}</b></td><td class="num">${fmt$(w.convTax)}</td></tr></tbody>` : `<tbody><tr><td class="note">No conversions in this window. Try a higher bracket or different ages.</td></tr></tbody>`;
+  // Before and after
+  const end=rows[rows.length-1].age, row=(k,a,b,better)=>{ const d=b-a, good=better==="lower"?d<0:d>0;
+    return `<tr><td>${k}</td><td class="num">${fmt$(a)}</td><td class="num">${fmt$(b)}</td><td class="num" style="color:${Math.abs(d)<1?"var(--muted)":good?"var(--good)":"var(--bad)"}">${d>=0?"+":"−"}${fmt$(Math.abs(d))}</td></tr>`; };
+  $("rcCmp").innerHTML=`<thead><tr><th></th><th class="num">No conversions</th><th class="num">With conversions</th><th class="num">Change</th></tr></thead><tbody>`+
+    row("Tax Deferred at 75", base.T75, w.T75, "lower") + row("First RMD (75)", base.firstRMD, w.firstRMD, "lower") +
+    row(`Income taxes from 75 to ${end}`, base.late, w.late, "lower") + row(`Lifetime income taxes (from ${S.retireAge})`, base.life, w.life, "lower") +
+    row(`Roth at ${end} (tax-free)`, base.Rend, w.Rend, "higher") + row(`Tax Deferred at ${end} (taxable)`, base.Tend, w.Tend, "lower") +
+    row(`Tax still owed on that Tax Deferred (at ${Math.round(RC_LEFT*100)}%)`, base.Tend*RC_LEFT, w.Tend*RC_LEFT, "lower") +
+    `<tr class="tot"><td>Total taxes, including what's left</td><td class="num">${fmt$(base.life+base.Tend*RC_LEFT)}</td><td class="num">${fmt$(w.life+w.Tend*RC_LEFT)}</td>` +
+    (()=>{ const d=(w.life+w.Tend*RC_LEFT)-(base.life+base.Tend*RC_LEFT); return `<td class="num" style="color:${Math.abs(d)<1?"var(--muted)":d<0?"var(--good)":"var(--bad)"}">${d>=0?"+":"−"}${fmt$(Math.abs(d))}</td></tr>`; })() +
+    row(`Brokerage + Cash at ${end}`, base.Bend, w.Bend, "higher") +
+    `<tr class="tot"><td>Money left at ${end} after all taxes</td><td class="num">${fmt$(base.net)}</td><td class="num">${fmt$(w.net)}</td>` +
+    (()=>{ const d=w.net-base.net; return `<td class="num" style="color:${Math.abs(d)<1?"var(--muted)":d>0?"var(--good)":"var(--bad)"}">${d>=0?"+":"−"}${fmt$(Math.abs(d))}</td></tr>`; })() + `</tbody>`;
+  const dl=(w.life+w.Tend*RC_LEFT)-(base.life+base.Tend*RC_LEFT);
+  $("rcSummary").innerHTML = w.convTot>0 ? `Converting a total of <b>${fmt$(w.convTot)}</b> costs about <b>${fmt$(w.convTax)}</b> in tax during those years. It cuts your first RMD from ${fmt$(base.firstRMD)} to ${fmt$(w.firstRMD)}. Total taxes paid go ${dl<0?"down":"up"} by about ${fmt$(Math.abs(dl))}, but conversion taxes are paid years earlier, and money spent on tax early stops growing. The best measure is what's left: you'd have about <b>${fmt$(Math.abs(w.net-base.net))} ${w.net>=base.net?"more":"less"}</b> at ${end} after all taxes (${fmt$(w.net)} vs ${fmt$(base.net)}).` : "";
+  $("sumRoth").textContent = w.convTot>0 ? `${fmtK(w.convTot)} converted` : "";
+}
+
+/* ---------------- Wiring ---------------- */
+let timer=null;
+function changed(rerun=true){ save(); if(!rerun) return; clearTimeout(timer); timer=setTimeout(run,150); }
+function init(){
+  claimOptions(); fillSimple(); bindSimple(); renderTables();
+  $("addAcct").onclick=()=>{S.accounts.push({name:"New account",type:"Brokerage",bal:0}); renderTables(); changed();};
+  // Accounts / By account type tabs
+  const setTab=pie=>{ $("tabList").setAttribute("aria-selected",!pie); $("tabPie").setAttribute("aria-selected",pie);
+    $("moneyList").style.display=pie?"none":""; $("moneyPie").style.display=pie?"":"none"; };
+  const setYearTab=wd=>{ $("tabYear").setAttribute("aria-selected",!wd); $("tabWd").setAttribute("aria-selected",wd); $("yearView").style.display=wd?"none":""; $("wdView").style.display=wd?"":"none"; };
+  $("tabYear").onclick=()=>setYearTab(false); $("tabWd").onclick=()=>setYearTab(true);
+  $("tabList").onclick=()=>setTab(false); $("tabPie").onclick=()=>setTab(true);
+  const holdTabs={tabHoldList:"holdList",tabHoldPie:"holdPie"};
+  const setHoldTab=id=>{ for(const [t,p] of Object.entries(holdTabs)){ $(t).setAttribute("aria-selected",t===id); $(p).style.display=t===id?"":"none"; } };
+  Object.keys(holdTabs).forEach(t=>$(t).onclick=()=>setHoldTab(t));
+  $("addHold").onclick=()=>{ const aid=$("holdAcct").value, a=acctById(aid); if(!a) return;
+    S.holdings.push({acct:a.name,aid,tick:"",desc:"",amt:0,group:HOLD_GROUPS.includes("Foundational")?"Foundational":HOLD_GROUPS[0]}); changed(false); renderHoldings();
+    // Put the cursor in the new ticker box
+    const rows=[...document.querySelectorAll("#holdTbl tbody tr")].filter(r=>!r.className); const last=rows.find(r=>r.querySelector("input")?.value==="" ); last?.querySelector("input")?.focus(); };
+  $("addInc").onclick=()=>{S.income.push({name:"New income",amt:0,start:S.retireAge,end:S.endAge,infl:true}); renderTables(); changed();};
+  $("linkAll").onclick=()=>{ for(const b of S.budget) if(!NO_LINK.test(b.item||"")){ b.link=true; b.start=+S.retireAge; } renderTables(); changed(); };
+  $("addLine").onclick=()=>{S.budget.push(Object.assign(L("Custom","New expense",0,"Monthly",S.retireAge,S.endAge),{link:true,endLink:true,dt:todayISO()})); renderTables(); changed();};
+  $("rerun").onclick=()=>{ seed=(Math.random()*2**31)|0; run(); };
+  $("resetBtn").onclick=()=>{ delete $("rebalTbl").dataset.built; if(!confirm("Clear everything back to the blank starting values?")) return; S=clone(DEFAULTS); save(); fillSimple(); renderTables(); run(); };
+  $("exportBtn").onclick=async()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), fname="retirement-plan-"+new Date().toISOString().slice(0,10)+".json";
+    // On the published web page, saving goes through the page host (it asks the viewer to confirm)
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads").catch(()=>null) : null;
+    if(dl){ try{ await dl.save({filename:fname, data:blob}); }catch(e){ if(e && e.code!=="declined") alert("Couldn't save the file here."); } return; }
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
+  $("importBtn").onclick=()=>$("importFile").click();
+  $("importFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ try{ S=fromSaved(JSON.parse(t)); save(); fillSimple(); renderTables(); run(); }catch(err){ alert("That file couldn't be read."); } }); e.target.value=""; };
+  // Top tabs: one page at a time; remembers the last page (and #page links work)
+  const pageIds=[...document.querySelectorAll(".ptab")].map(b=>b.dataset.page);
+  const showPage=(id,scroll)=>{ if(!pageIds.includes(id)) id=pageIds[0];
+    document.querySelectorAll(".ptab").forEach(b=>b.setAttribute("aria-selected", b.dataset.page===id));
+    document.querySelectorAll(".page").forEach(sec=>sec.classList.toggle("on", sec.id==="page-"+id));
+    try{ localStorage.setItem(STORE_KEY+"-page", id); }catch(e){}
+    try{ if(location.hash!=="#"+id) history.replaceState(null,"","#"+id); }catch(e){}
+    if(scroll) window.scrollTo(0,0); };
+  document.querySelectorAll(".ptab").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page,true)));
+  $("navPct").addEventListener("click",()=>showPage("mc",true));
+  window.addEventListener("hashchange",()=>showPage(location.hash.slice(1)));
+  let first=location.hash.slice(1); if(!pageIds.includes(first)){ try{ first=localStorage.getItem(STORE_KEY+"-page")||""; }catch(e){ first=""; } }
+  showPage(first);
+  run();
+}
+init();
+</script>
+</body>
+</html>
