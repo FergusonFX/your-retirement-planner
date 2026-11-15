@@ -43,7 +43,13 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 header{padding:12px 16px 4px;max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.ttl{display:flex;align-items:baseline;column-gap:14px;flex-wrap:wrap;min-width:0}
+.ttl{display:flex;flex-direction:column;row-gap:4px;min-width:0;flex:1 1 auto}
+.subrow{display:flex;align-items:center;flex-wrap:nowrap;gap:6px 14px}
+.filebtns{display:flex;flex-wrap:nowrap;gap:6px;flex:none}
+.subrow .gapsp{flex:0 30 76px}
+.subrow .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.filebtns .btn{font-size:12px;padding:3px 9px}
+@media (max-width:700px){header{flex-wrap:wrap;row-gap:6px} .ttl{display:contents} .ttl h1{flex:1 1 0;min-width:0;font-size:19px} .subrow{order:5;flex-basis:100%} .gapsp{display:none} .subrow{flex-wrap:wrap} .filebtns{flex:1 1 auto;flex-wrap:wrap}}
 h1{font-size:22px;margin:0}
 .sub{color:var(--text-2);margin:0}
 main{max-width:1100px;margin:0 auto;padding:14px 16px 40px}
@@ -60,7 +66,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 40px}
 .ptab{font:inherit;font-size:14px;color:var(--text-2);background:none;border:1px solid transparent;border-radius:8px;padding:7px 12px;white-space:nowrap;cursor:pointer}
 .ptab:hover{color:var(--text);background:var(--surface-2)}
 .ptab[aria-selected="true"]{color:var(--text);background:var(--surface);border-color:var(--border);font-weight:600}
-.navpct{margin-left:auto;font:inherit;font-size:15px;font-weight:700;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.navpct{margin-left:0;font:inherit;font-size:15px;font-weight:700;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
 .navpct .dot{margin:0}
 .navpct{flex-direction:column;gap:0;border-radius:10px;padding:4px 12px;line-height:1.15;flex:none}
 .navpct small{text-align:center;line-height:1.1}
@@ -77,6 +83,7 @@ details.card>.body{padding:0 16px 14px}
 .sumval{color:var(--text-2);font-weight:400;font-size:13px;margin-left:auto;margin-right:10px}
 h2{font-size:16px;margin:0 0 10px}
 h3{font-size:14px;margin:14px 0 6px;color:var(--text-2)}
+h3.secgap{margin-top:34px;padding-top:16px;border-top:1px solid var(--border)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 10px}
 label.f{display:flex;flex-direction:column;font-size:12px;color:var(--text-2);gap:3px}
@@ -87,7 +94,8 @@ div.f{display:flex;flex-direction:column;font-size:12px;color:var(--text-2);gap:
 .sphead input{margin:0 4px 0 0;width:12px;height:12px;vertical-align:-1px}
 body.nosp .spopt{display:none !important}
 .inrow{display:flex;align-items:center;gap:12px}
-.inrow input.money{flex:1;min-width:0}
+.inrow{flex-wrap:wrap;row-gap:6px}
+.inrow input.money{flex:1;min-width:120px}
 .chkin{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);white-space:nowrap;cursor:pointer}
 .chkin input{margin:0}
 .optchk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);margin-top:14px;cursor:pointer}
@@ -195,6 +203,11 @@ table.brk .from{color:var(--text-2)}
 .taxopt label{cursor:pointer}
 .taxopt .inl{width:auto;min-width:0;padding:3px 6px}
 .taxopt input.inl{width:64px;text-align:right}
+.guardopts{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.guardopt{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:start;font-size:14px;line-height:30px;cursor:pointer}
+.guardopt input[type=checkbox]{margin:9px 0 0}
+.guardopt input.pct{width:54px;padding:3px 6px;text-align:right;display:inline-block;margin:0 2px;line-height:normal}
+.guardhint{margin-top:14px;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-size:13.5px;line-height:1.55;color:var(--text)}
 .namesGrid .nmrow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .namesGrid .nmrow .sw{flex:none}
 .namesGrid .nmrow input{flex:1;min-width:0}
@@ -225,14 +238,43 @@ table.brk .from{color:var(--text-2)}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline}
 .warnbox{background:var(--surface-2);border-left:3px solid var(--warn);padding:6px 10px;font-size:13px;border-radius:4px;margin-top:8px}
 .totals{display:flex;justify-content:space-between;font-weight:600;font-size:13px;padding:6px 4px 0}
+.aboutlink{margin-left:auto;flex:none;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--accent);cursor:pointer;text-decoration:underline}
+#about{max-width:520px;width:calc(100% - 32px);border:1px solid var(--border);border-radius:12px;padding:22px 24px 18px;background:var(--surface);color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+#about::backdrop{background:rgba(0,0,0,.35)}
+#about h2{margin:0 0 10px;font-size:20px}
+#about p,#about li{font-size:14px;line-height:1.5;margin:0 0 10px}
+#about ul{margin:0 0 10px;padding-left:20px}
+#about .aboutsig{text-align:right;margin:-6px 8px 14px 0;font-style:italic;font-weight:600;color:var(--text-2)}
+#about .aboutfine{color:var(--text-2);font-size:13px}
+#about .aboutbtns{display:flex;justify-content:flex-end;margin-top:6px}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
+<dialog id="about" aria-labelledby="aboutTtl">
+  <h2 id="aboutTtl">About this planner</h2>
+  <p>I built this to plan my own retirement, and figured it might help someone else too.</p>
+  <p class="aboutsig">— FergusonFX</p>
+  <p>Put in your own numbers: what you've saved, what you spend, Social Security, and when you'd like to retire. It plays out thousands of possible markets and shows how often your money lasts.</p>
+  <ul>
+    <li><b>No sign-in, no account.</b> Just open it and go.</li>
+    <li><b>Your numbers stay with you.</b> They're saved right here in your browser, on your computer. Nobody else can see them, not even me.</li>
+    <li><b>Keep a backup.</b> Clearing your browser or switching computers will lose them, so every so often click <b>Save a copy</b> at the top of the page. <b>Load a copy</b> brings it back.</li>
+  </ul>
+  <p class="aboutfine">It's a planning tool to learn from, not financial advice. Run the big decisions by a pro.</p>
+  <div class="aboutbtns"><button class="btn primary" id="aboutClose" type="button">Got it</button></div>
+</dialog>
 <div class="topbar">
 <header>
   <div class="ttl"><h1>Your Retirement Planner</h1>
-  <p class="sub">all amounts in today's dollars · results update as you type</p></div>
+    <div class="subrow"><p class="sub">All amounts in today's dollars · results update as you type</p><span class="gapsp"></span>
+    <div class="filebtns">
+      <button class="btn" id="exportBtn" title="Your changes are saved automatically in this browser. This saves a backup file you can load later or on another computer.">Save a copy</button>
+      <button class="btn" id="importBtn" title="Load a .json file saved with Save a copy">Load a copy</button>
+      <button class="btn" id="resetBtn" title="Clears everything back to the blank starting values. It asks first, so save a copy before if you want to keep your numbers.">Reset</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    </div></div></div>
+  <button class="aboutlink" id="aboutBtn" type="button">About</button>
   <button class="navpct" id="navPct" title="Monte Carlo success rate: click to see the results"><span class="np"><i class="dot"></i><span>–</span></span><small>Monte Carlo<br>success</small></button>
 </header>
 <nav class="tabsbar"><div class="navin" role="tablist">
@@ -358,15 +400,6 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
   </div>
   </div>
 
-  <div class="card">
-    <div class="row">
-      <button class="btn" id="exportBtn">Save a copy (.json)</button>
-      <button class="btn" id="importBtn">Load a copy</button>
-      <button class="btn" id="resetBtn">Reset to blank</button>
-      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
-    </div>
-    <p class="note">Your changes are saved automatically in this browser.</p>
-  </div>
 </section>
 <section class="page" id="page-money">
   <details class="card" open>
@@ -434,7 +467,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
   <details class="card" open>
     <summary>Rental, Home and Other Income <span class="sumval" id="sumOther"></span></summary>
     <div class="body">
-      <h3 style="margin-top:0">Rental 01</h3>
+      <h3 style="margin-top:0">Rental Property</h3>
       <div class="grid2">
         <label class="f" title="What the property is worth minus what you still owe on it">Property equity<input id="rValue" class="money"></label>
         <div class="f"><label for="rIncome">Net rental income per year</label>
@@ -460,20 +493,22 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
         </div>
         <p class="note" id="dNote"></p>
       </div>
-      <h3>Primary home</h3>
+      <h3 class="secgap">Primary Home</h3>
       <div class="grid2">
         <label class="f" title="What the home is worth minus what you still owe on it">Home equity<input id="hEquity" class="money"></label>
       </div>
       <label class="optchk"><input type="checkbox" id="hDown"> Downsize and buy a smaller place</label>
-      <div class="optbody hopt" data-plan="sell">
+      <label class="optchk"><input type="checkbox" id="hRentOn"> Sell and rent</label>
+      <div class="optbody hopt">
         <div class="grid3" style="align-items:end">
           <label class="f">Sell at age (your age)<input id="hAge" type="number"></label>
           <label class="f">Selling costs and taxes %<input id="hSellCost" type="number" min="0" max="60"></label>
-          <label class="f" title="Bought outright with cash from the sale. This becomes your new home equity.">Price of new home (paid in cash)<input id="hNextHome" class="money"></label>
+          <label class="f hdownopt" title="Bought outright with cash from the sale. This becomes your new home equity.">Price of new home (paid in cash)<input id="hNextHome" class="money"></label>
+          <label class="f hrentopt" title="In today's dollars. It's the Rent line on the Your Spending page, so it rises with inflation.">Rent per month<input id="hRent" class="money"></label>
         </div>
       </div>
       <p class="note" id="hNote"></p>
-      <h3>Other income</h3>
+      <h3 class="secgap">Other Income and Pension</h3>
       <div class="scroll"><table class="tbl" id="incTbl">
         <thead><tr><th>Source</th><th class="num">Per year</th><th>From</th><th>Through</th><th title="Checked: the amount rises with inflation every year. Unchecked: the same dollar amount every year, so it buys less over time.">Rises w/ inflation</th><th></th></tr></thead><tbody></tbody>
       </table></div>
@@ -515,19 +550,17 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
       <h3>Budget lines</h3>
       <div id="budInfl"></div>
       <div class="scroll"><table class="tbl" id="budTbl">
-        <thead><tr><th title="Drag to move a line"></th><th>Item</th><th class="num">Amount</th><th>Per</th><th title="First age (yours) this expense is paid">From age</th><th title="Last age (yours) this expense is paid. It stops after this age.">To age</th><th title="Scales with the spending phase">Phase</th><th title="Goes down or up when a spending guardrail box is checked">Can cut</th><th title="A fixed payment, like a mortgage: the same dollars every year, so it shrinks in today's dollars and isn't raised for inflation">Fixed $</th><th></th></tr></thead>
+        <thead><tr><th title="Drag to move a line"></th><th>Item</th><th class="num">Amount</th><th>Per</th><th title="First age (yours) this expense is paid">From age</th><th title="Last age (yours) this expense is paid. It stops after this age.">To age</th><th title="Scales with the spending phase">Phase</th><th title="Goes down or up when a spending guardrail box is checked">Can cut</th><th></th></tr></thead>
         <tbody></tbody>
       </table></div>
       <div class="row" style="margin-top:6px"><button class="btn" id="addLine">+ Add line</button><button class="btn" id="linkAll" title="Set every From age (except health insurance before Medicare, Medicare and late-life care) to follow the retirement age">Link From ages to retirement age</button></div>
       <p class="note">Drag the <b>⠿</b> handle to move a line up or down, or into another group. <b style="color:var(--accent)">Blue</b> ages are linked: From ages follow your retirement age, and To ages follow the plan's end age, both in Ages and timing. Type a different age to set one by hand, or type the linked age to link it again. Health insurance before Medicare, Medicare and late-life care keep their own ages. Each line is paid every year from the "From age" through the "To age" (your age), then stops. For example, set the mortgage's To age to the year before it's paid off, and stop health insurance before Medicare at 64. Every amount is in today's dollars and keeps pace with inflation, except the mortgage (see the note under it).</p>
-      <h3 style="margin-top:18px">Spending guardrails</h3>
-      <div class="grid2" style="align-items:end">
-        <label class="row" style="gap:8px;font-size:13px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="gOn" style="flex:none;margin-top:2px"> <span>Cut back on "Can cut" lines when the money is at risk</span></label>
-        <label class="f">Cut by %<input id="gCut" type="number" min="0" max="100"></label>
-        <label class="row" style="gap:8px;font-size:13px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="gRaiseOn" style="flex:none;margin-top:2px"> <span>Spend more on "Can cut" lines when the plan is very safe</span></label>
-        <label class="f">Raise by %<input id="gRaise" type="number" min="0" max="200"></label>
+      <h3 class="secgap">Spending guardrails</h3>
+      <div class="guardopts">
+        <label class="guardopt"><input type="checkbox" id="gOn"><span>Cut back on "Can cut" lines when the money is at risk. Cut by <input id="gCut" type="number" min="0" max="100" class="pct" aria-label="Cut by percent"> %</span></label>
+        <label class="guardopt"><input type="checkbox" id="gRaiseOn"><span>Spend more on "Can cut" lines when the plan is very safe. Add by <input id="gRaise" type="number" min="0" max="200" class="pct" aria-label="Raise by percent"> %</span></label>
       </div>
-      <p id="gHint" style="font-size:14px;font-weight:600;color:var(--text);margin:10px 0 0;line-height:1.45"></p>
+      <div class="guardhint" id="gHint"></div>
       <p class="note" id="gNote"></p>
     </div>
   </details>
@@ -735,6 +768,7 @@ const DEFAULTS = {
 };
 // Budget "From age" follows the retirement age unless changed by hand.
 // Lines tied to a specific age (health insurance before Medicare, Medicare, late-life care) don't follow it.
+const RENT_RE=/^rent\b/i, OWN_RE=/mortgage|property tax|home insurance|\bHOA\b|maintenance|big project/i;
 const NO_LINK = /\bACA\b|Medicare|Medigap|Late-life|assisted living/i;
 const linkDefault = (b, retire) => +b.start===+retire && !NO_LINK.test(b.item||"");
 DEFAULTS.budget.forEach(b=>b.link=linkDefault(b, DEFAULTS.retireAge));
@@ -742,7 +776,7 @@ DEFAULTS.budget.forEach(b=>b.link=linkDefault(b, DEFAULTS.retireAge));
 const FLEX_RE = /dining|travel|vacation|hobb|entertain|subscription|gym|club|gift|charit|clothing|big project|vehicle replacement|help for children/i;
 DEFAULTS.budget.forEach(b=>b.flex=FLEX_RE.test(b.item||""));
 // When the retirement age changes, move every linked line's From age with it
-function syncLinkedStarts(){ for(const b of S.budget) if(b.link) b.start=+S.retireAge; }
+function syncLinkedStarts(){ for(const b of S.budget) if(b.link && !(b.homeLink && S.home.plan==="rent")) b.start=+S.retireAge; }
 // "To age" (and rental income, last spending phase) follow the plan's end age unless changed by hand
 function setEndLinks(o, endAge){
   for(const b of o.budget||[]) if(b.endLink===undefined) b.endLink = +b.end===+endAge;
@@ -821,6 +855,12 @@ function fromSaved(o){
   // Withdrawal plan saved before the refill step existed
   if(o && o.wd){ if(o.wd.years==null) o.wd.years=2; if(o.wd.have===undefined) o.wd.have=null; }
   if(o && o.tax) o.tax=Object.assign(clone(DEFAULTS.tax), o.tax);
+  // Every budget has a Rent line (for renters, and for selling the home and renting)
+  if(o && Array.isArray(o.budget) && !o.budget.some(b=>RENT_RE.test(b.item||""))){
+    const m=o.budget.findIndex(b=>/mortgage/i.test(b.item||"")), at=m>=0?m+1:o.budget.findIndex(b=>b.cat==="Housing");
+    const ra=+(o.retireAge ?? DEFAULTS.retireAge), ea=+(o.endAge ?? DEFAULTS.endAge);
+    o.budget.splice(Math.max(0,at),0,Object.assign(L("Housing","Rent",0,"Monthly",ra,ea),{link:true,endLink:true,flex:false,dt:todayISO()}));
+  }
   // Budget lines remember when their amount was last entered (for the inflation reminder); older saves count as current today
   if(o && Array.isArray(o.budget)) for(const b of o.budget) if(!b.dt) b.dt=todayISO();
   // Tax brackets: fill in anything missing from the 2026 numbers
@@ -889,7 +929,7 @@ const simple = [
   ["target",()=>S.market.target,v=>S.market.target=num(v)],
   ["pClaim",()=>S.ss.pClaim,v=>S.ss.pClaim=num(v)],
   ["hEquity",()=>S.home.equity,v=>{S.home.equity=num(v); homeUI();},true],
-  ["hAge",()=>S.home.age,v=>{S.home.age=num(v); homeUI();}],
+  ["hAge",()=>S.home.age,v=>{S.home.age=num(v); const b=rentLine(); if(S.home.plan==="rent" && b && b.homeLink){ b.start=+S.home.age; renderTables(); } homeUI();}],
   ["hSellCost",()=>S.home.sellCost,v=>{S.home.sellCost=num(v); homeUI();}],
   ["hNextHome",()=>S.home.nextHome,v=>{S.home.nextHome=num(v); homeUI();},true],
   ["jClaim",()=>S.ss.jClaim,v=>S.ss.jClaim=num(v)],
@@ -913,7 +953,7 @@ function fillSimple(){
   $("brkYear").value = S.brk.year; renderBrk();
   $("spOn").checked = !!S.spouse; spouseUI();
   $("rSellOn").checked = !!S.rental.sellOn; rentalUI();
-  $("hDown").checked = S.home.plan==="sell";
+  homeUI();
   $("rcPlan").checked = !!S.tax.rothPlan; taxUI();
   $("rEnd").classList.toggle("linked",!!S.rental.endLink);
   homeUI();
@@ -929,7 +969,11 @@ function bindSimple(){
   $("brkYear").addEventListener("input",e=>{ S.brk.year=num(e.target.value); brkNote(); taxUI(); changed(false); });
   $("brkReset").addEventListener("click",()=>{ if(!confirm("Put back the 2026 IRS brackets, deductions and capital gains numbers?")) return;
     S.brk=clone(DEFAULTS.brk); $("brkYear").value=S.brk.year; renderBrk(); changed(); });
-  $("hDown").addEventListener("change",e=>{ S.home.plan=e.target.checked?"sell":"keep"; homeUI(); changed(); });
+  // Downsize and Sell and rent: only one at a time
+  $("hDown").addEventListener("change",e=>{ if(S.home.plan==="rent") rentPlanOff(); S.home.plan=e.target.checked?"sell":"keep"; homeUI(); renderTables(); changed(); });
+  $("hRentOn").addEventListener("change",e=>{ if(e.target.checked){ S.home.plan="rent"; rentPlanOn(); } else { rentPlanOff(); S.home.plan="keep"; } homeUI(); renderTables(); changed(); });
+  $("hRent").addEventListener("input",()=>{ const v=num($("hRent").value); S.home.rentMo=v; const b=rentLine(); if(b && S.home.plan==="rent"){ b.amt=v; b.per="Monthly"; b.dt=todayISO(); } homeUI(); renderTables(); changed(); });
+  $("hRent").addEventListener("blur",()=>{ $("hRent").value=Math.round(num($("hRent").value)).toLocaleString("en-US"); });
   $("rInfl").addEventListener("change",e=>{ S.rental.infl=e.target.checked; changed(); });
   $("spOn").addEventListener("change",e=>{ S.spouse=e.target.checked;
     // IRMAA limit: swap the standard single and joint amounts if it hasn't been changed by hand
@@ -950,12 +994,40 @@ function bindSimple(){
   }
 }
 // Cash left after selling the home and paying cash for the new one
-function homeCash(){ const H=S.home; return (+H.equity||0)*(1-(+H.sellCost||0)/100) - (+H.nextHome||0); }
+function homeCash(){ const H=S.home; return (+H.equity||0)*(1-(+H.sellCost||0)/100) - (H.plan==="rent" ? 0 : (+H.nextHome||0)); }
+// Rent line on the Spending page, and the costs of owning that stop when the home is sold to rent
+function rentLine(){ return S.budget.find(b=>RENT_RE.test(b.item||"")); }
+function rentMonthly(){ const b=rentLine(); return b ? (+b.amt||0)/(b.per==="Annual"?12:1) : 0; }
+function ownCostsYear(){ const a=+S.home.age; return S.budget.filter(b=>OWN_RE.test(b.item||"") && +b.start<=a && +b.end>=a).reduce((t,b)=>t+(+b.amt||0)*(b.per==="Monthly"?12:1),0); }
+// Sell and rent turns on: the Rent line starts at the sale age (its old values are kept to put back later)
+function rentPlanOn(){
+  const H=S.home; let b=rentLine();
+  if(!b){ const m=S.budget.findIndex(x=>/mortgage/i.test(x.item||"")); b=Object.assign(L("Housing","Rent",0,"Monthly",+H.age,+S.endAge),{endLink:true,dt:todayISO()}); S.budget.splice(m>=0?m+1:0,0,b); }
+  if(!H.rentPrev) H.rentPrev={amt:b.amt, per:b.per, start:b.start, link:!!b.link};
+  b.per="Monthly"; b.amt=+H.rentMo||0; b.start=+H.age; b.link=false; b.homeLink=true; b.dt=todayISO();
+}
+function rentPlanOff(){
+  const H=S.home, b=rentLine();
+  if(b){ if(H.rentPrev){ Object.assign(b, H.rentPrev); } else { b.amt=0; } b.homeLink=false; if(b.link) b.start=+S.retireAge; }
+  H.rentPrev=null;
+}
 // Show the downsize fields only when chosen, plus a short explanation
 function homeUI(){
-  const H=S.home, plan=H.plan==="sell"?"sell":"keep";
-  document.querySelectorAll(".hopt").forEach(el=>{ el.style.display = plan==="sell" ? "" : "none"; });
+  const H=S.home, plan=H.plan==="sell"||H.plan==="rent"?H.plan:"keep";
+  $("hDown").checked = plan==="sell"; $("hRentOn").checked = plan==="rent";
+  document.querySelectorAll(".hopt").forEach(el=>{ el.style.display = plan==="keep" ? "none" : ""; });
+  document.querySelectorAll(".hdownopt").forEach(el=>{ el.style.display = plan==="sell" ? "" : "none"; });
+  document.querySelectorAll(".hrentopt").forEach(el=>{ el.style.display = plan==="rent" ? "" : "none"; });
   if(plan==="keep"){ $("hNote").innerHTML="The home isn't part of your invested money and isn't used to pay for retirement."; return; }
+  if(plan==="rent"){
+    const net=(+H.equity||0)*(1-(+H.sellCost||0)/100), rent=rentMonthly(), own=ownCostsYear();
+    if(document.activeElement!==$("hRent")) $("hRent").value=Math.round(rent).toLocaleString("en-US");
+    $("hNote").innerHTML = `At ${H.age}: the sale adds <b>${fmt$(net)}</b> (equity minus ${+H.sellCost||0}% selling costs and taxes) to your savings, invested with the rest. ` +
+      `Rent of <b>${fmt$(rent)}</b> a month (${fmt$(rent*12)} a year) starts then, on the Rent line of the Your Spending page, and rises with inflation. ` +
+      `The costs of owning stop: Mortgage, Property tax, Home insurance, HOA, Maintenance and Big projects` + (own>0.5?` (about ${fmt$(own)} a year as entered)`:"") + `. ` +
+      `Married couples can usually exclude up to $500,000 of gain from tax ($250,000 if single); put any tax above that in the selling costs %.`;
+    return;
+  }
   const net=(+H.equity||0)*(1-(+H.sellCost||0)/100), cash=homeCash();
   $("hNote").innerHTML = `At ${H.age}: sale brings <b>${fmt$(net)}</b> after costs. The new home is bought outright, so your <b>new home equity is ${fmt$(+H.nextHome||0)}</b>, and ` +
     (cash>=0 ? `<b>${fmt$(cash)}</b> goes into your savings.` : `the extra <b>${fmt$(-cash)}</b> comes out of your savings.`) +
@@ -1109,8 +1181,12 @@ function endInput(b){
   style(); return i;
 }
 function startInput(b){
-  const i=ageInput(b.start,v=>{ b.start=v; b.link=(v===+S.retireAge && !NO_LINK.test(b.item||"")); style(); });
-  const style=()=>{ i.classList.toggle("linked",!!b.link); i.title=b.link?"Follows your retirement age. Type a different age to set it by hand.":"Set by hand. Type your retirement age to link it again."; };
+  const home=()=>b.homeLink && S.home.plan==="rent";
+  const i=ageInput(b.start,v=>{ b.start=v;
+    if(home()){ S.home.age=v; $("hAge").value=v; homeUI(); style(); return; }
+    b.link=(v===+S.retireAge && !NO_LINK.test(b.item||"")); style(); });
+  const style=()=>{ i.classList.toggle("linked",!!b.link || home());
+    i.title=home()?"Follows the home sale age (Sell and rent, on the Other Income page). Changing it here changes the sale age too.":b.link?"Follows your retirement age. Type a different age to set it by hand.":"Set by hand. Type your retirement age to link it again."; };
   style(); return i;
 }
 function td(child,cls){ const t=document.createElement("td"); if(cls) t.className=cls; if(child instanceof Node) t.appendChild(child); else t.textContent=child; return t; }
@@ -1154,10 +1230,10 @@ function renderTables(){
   const bb=$("budTbl").querySelector("tbody"); bb.innerHTML="";
   let lastCat=null;
   S.budget.forEach((b,i)=>{
-    if(b.cat!==lastCat){ lastCat=b.cat; const h=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=10; c.innerHTML=`<b style="font-size:12px;color:var(--text-2)">${esc(b.cat||"Other")}</b>`; h.appendChild(c); bb.appendChild(h);
+    if(b.cat!==lastCat){ lastCat=b.cat; const h=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=9; c.innerHTML=`<b style="font-size:12px;color:var(--text-2)">${esc(b.cat||"Other")}</b>`; h.appendChild(c); bb.appendChild(h);
       dropTarget(h, ()=>({cat:b.cat, at:S.budget.findIndex(x=>x.cat===b.cat), into:true})); }
     const tr=document.createElement("tr");
-    const amt=moneyInput(b.amt,v=>{ b.amt=v; b.dt=todayISO(); budUndo=null; budInflUI(); }); amt.style.width="74px";
+    const amt=moneyInput(b.amt,v=>{ b.amt=v; b.dt=todayISO(); budUndo=null; budInflUI(); if(b.homeLink && S.home.plan==="rent"){ S.home.rentMo=v/(b.per==="Annual"?12:1); homeUI(); } }); amt.style.width="74px";
     const per=selectInput(["Monthly","Annual"],b.per,v=>b.per=v); per.style.width="74px";
     const name=textInput(b.item,v=>b.item=v); name.style.minWidth="100px"; name.style.width="100%";
     const hd=td("⠿","drag"); hd.title="Drag to move this line, or drop it in another group";
@@ -1166,10 +1242,10 @@ function renderTables(){
     tr.addEventListener("dragend",()=>{ tr.draggable=false; tr.classList.remove("dragging"); dragIdx=null; clearDrop(); });
     dropTarget(tr, e=>{ const r=tr.getBoundingClientRect(), after=e.clientY>r.top+r.height/2; return {cat:b.cat, at:i+(after?1:0), after}; });
     tr.append(hd, td(name), td(amt,"num"), td(per), td(startInput(b)), td(endInput(b)),
-      td(check(b.phase,v=>b.phase=v)), td(check(b.flex,v=>b.flex=v)), td(check(b.fixed,v=>{ b.fixed=v; renderTables(); })), td(delBtn(()=>S.budget.splice(i,1))));
+      td(check(b.phase,v=>b.phase=v)), td(check(b.flex,v=>b.flex=v)), td(delBtn(()=>S.budget.splice(i,1))));
     bb.appendChild(tr);
     // Fixed-dollar lines (the mortgage) get a short explanation underneath
-    if(b.fixed){ const n=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=10; c.className="fixnote";
+    if(b.fixed){ const n=document.createElement("tr"); const c=document.createElement("td"); c.colSpan=9; c.className="fixnote";
       dropTarget(n, ()=>({cat:b.cat, at:i+1, after:true, row:tr}));
       c.innerHTML=`Fixed payment: stays the same dollar amount every year, and isn't raised by the inflation reminder, so with inflation it costs a little less in today's dollars each year (about <span class="inflPct">${esc(S.market.infl)}</span>% less per year).`; n.appendChild(c); bb.appendChild(n); }
   });
@@ -1177,7 +1253,7 @@ function renderTables(){
 
 // ---- Budget inflation reminder ----
 // Each line keeps the date its amount was last entered (b.dt). When lines are about a year old or more,
-// a banner offers to raise them by the inflation assumption (or a % you type). Fixed $ lines are skipped.
+// a banner offers to raise them by the inflation assumption (or a % you type). The mortgage (a fixed payment) is skipped.
 let budDismissed=false, budUndo=null, budPct=null;
 function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function monthsSince(iso){ const [y,m,d]=String(iso||todayISO()).split("-").map(Number), n=new Date();
@@ -1202,7 +1278,7 @@ function budInflUI(){
     box.querySelector(".sub").innerHTML=`Adds about <b>${fmt$(after-before)}</b> a year (${fmt$(before)} → ${fmt$(after)}). `+
       (yrs>1?`Compounded: ${q}% a year for ${yrs} years is about ${(Math.pow(1+q/100,yrs)*100-100).toFixed(1)}%. `:"")+
       `The % starts at your inflation assumption; type the actual figure if you know it. `+
-      (others>0?`Lines you've updated in the last year are left alone. `:"")+`Fixed $ lines are skipped. `+
+      (others>0?`Lines you've updated in the last year are left alone. `:"")+`The mortgage (a fixed payment) is skipped. `+
       `Also check Social Security (copy today's numbers from your SSA statement), rental income and home equity.`; };
   sub();
   $("budPct").addEventListener("input",e=>{ budPct=num(e.target.value); sub(); });
@@ -1234,6 +1310,7 @@ function schedule(noGuard){
       for(const b of S.budget){
         if(age < b.start || age > b.end) continue;
         if(homeOn && age>=+H.age && /mortgage/i.test(b.item||"")) continue; // new home is bought outright
+        if(H.plan==="rent" && age>=+H.age && OWN_RE.test(b.item||"")) continue; // sold to rent: no more owning costs
         let a = (+b.amt||0) * (b.per==="Monthly"?12:1);
         if(b.phase) a *= phaseMult(age);
         if(b.fixed) a /= cum[y];
@@ -1848,7 +1925,7 @@ function guardRender(rows,res,base,firstRet){
   // Which box to use, based on the plan's success rate without any guardrail
   const bp=base.success*100;
   const dot=c=>`<i class="dot" style="background:${c};display:inline-block;margin-right:6px;vertical-align:middle"></i>`;
-  $("gHint").innerHTML = `Rule of thumb: if the plan's success rate is below 75%, check <i>Cut back</i>. If it's above 95%, you can check <i>Spend more</i>. In between, leave both unchecked.<br>` +
+  $("gHint").innerHTML = `<b>Rule of thumb:</b> if the plan's success rate is below 75%, check <i>Cut back</i>. If it's above 95%, you can check <i>Spend more</i>. In between, leave both unchecked.<br>` +
     guardStatus(bp, res.success*100, dot);
   const card=$("guardCard");
   if(!on){ card.style.display="none"; return; }
@@ -2063,6 +2140,11 @@ function init(){
     if(dl){ try{ await dl.save({filename:fname, data:blob}); }catch(e){ if(e && e.code!=="declined") alert("Couldn't save the file here."); } return; }
     const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
   $("importBtn").onclick=()=>$("importFile").click();
+  // About: opens from the header link, and once on a first visit (nothing saved yet)
+  const ab=$("about"); $("aboutBtn").onclick=()=>ab.showModal(); $("aboutClose").onclick=()=>ab.close();
+  ab.addEventListener("click",e=>{ const r=ab.getBoundingClientRect(); if(e.target===ab && (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)) ab.close(); });
+  let seen=true; try{ seen = !!localStorage.getItem(STORE_KEY) || !!localStorage.getItem(STORE_KEY+"-about"); localStorage.setItem(STORE_KEY+"-about","1"); }catch(e){}
+  if(!seen) ab.showModal();
   $("importFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ try{ S=fromSaved(JSON.parse(t)); save(); fillSimple(); renderTables(); run(); }catch(err){ alert("That file couldn't be read."); } }); e.target.value=""; };
   // Top tabs: one page at a time; remembers the last page (and #page links work)
   const pageIds=[...document.querySelectorAll(".ptab")].map(b=>b.dataset.page);
