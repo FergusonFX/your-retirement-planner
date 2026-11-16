@@ -271,6 +271,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
     <div class="filebtns">
       <button class="btn" id="exportBtn" title="Your changes are saved automatically in this browser. This saves a backup file you can load later or on another computer.">Save a copy</button>
       <button class="btn" id="importBtn" title="Load a .json file saved with Save a copy">Load a copy</button>
+      <button class="btn" id="exampleBtn" title="Fills in a sample plan: a married couple, 62 and 60, retiring at 65 with about $1 million saved. It replaces your numbers, and asks first.">Load an example</button>
       <button class="btn" id="resetBtn" title="Clears everything back to the blank starting values. It asks first, so save a copy before if you want to keep your numbers.">Reset</button>
       <input type="file" id="importFile" accept=".json,application/json" style="display:none">
     </div></div></div>
@@ -784,6 +785,46 @@ function setEndLinks(o, endAge){
   const lp=(o.phases||[])[(o.phases||[]).length-1]; if(lp && lp.endLink===undefined) lp.endLink = +lp.through===+endAge;
 }
 setEndLinks(DEFAULTS, DEFAULTS.endAge);
+// "Load an example": a married couple, 62 and 60, retiring at 65 with about $1 million and a mortgage paid off at 74, and about $110,000–120,000 a year of spending.
+// Tuned to land near 85% Monte Carlo success.
+function examplePlan(){
+  const E=clone(DEFAULTS);
+  Object.assign(E,{spouse:true,currentAge:62,jessAge:60,retireAge:65,endAge:95,pSave:24000,jSave:12000});
+  E.accounts=[
+    {id:"ex401p",name:"Your 401(k)",type:"Traditional",bal:470000},
+    {id:"ex401s",name:"Spouse's 401(k)",type:"Traditional",bal:210000},
+    {id:"exroth",name:"Roth IRAs",type:"Roth",bal:90000},
+    {id:"exbrk",name:"Brokerage account",type:"Brokerage",bal:120000},
+    {id:"excash",name:"Cash savings",type:"Cash",bal:110000}];
+  const nm=Object.fromEntries(E.accounts.map(a=>[a.id,a.name]));
+  const h=(aid,tick,desc,amt,group)=>({acct:nm[aid],aid,tick,desc,amt,group});
+  const VTI="Vanguard Total Stock Market ETF", SCHD="Schwab U.S. Dividend Equity ETF", BND="Vanguard Total Bond Market ETF";
+  E.holdings=[
+    h("ex401p","VTI",VTI,211500,"Foundational"), h("ex401p","SCHD",SCHD,70500,"Dividends"), h("ex401p","BND",BND,188000,"Bonds"),
+    h("ex401s","VTI",VTI,105000,"Foundational"), h("ex401s","BND",BND,105000,"Bonds"),
+    h("exroth","QQQM","Invesco Nasdaq 100 ETF (growth)",90000,"Growth"),
+    h("exbrk","SCHD",SCHD,60000,"Dividends"), h("exbrk","VTI",VTI,60000,"Foundational"),
+    h("excash","Cash","High-yield savings or money market",110000,"Cash")];
+  E.alloc={stocks:60,bonds:29,cash:11};  // matches the holdings above
+  E.ss={pClaim:67,jClaim:67,adj:100,
+    p:{62:2380,63:2550,64:2720,65:2950,66:3170,67:3400,68:3670,69:3940,70:4220},
+    j:{62:1400,63:1500,64:1600,65:1730,66:1870,67:2000,68:2160,69:2320,70:2480}};
+  E.tax.mode=2;  // Standard order
+  E.roth.irmaa=218000;  // married filing jointly IRMAA limit
+  E.wd.age=65;
+  const amt={"Property tax":6000,"Home insurance":2400,"Electric, gas, water, trash":400,"Internet, phone, TV":200,"Maintenance and repairs":5000,
+    "Health insurance before Medicare (ACA)":9000,"Medicare premiums (B, D)":480,"Medigap / Advantage plan":400,"Dental and vision":100,"Copays and prescriptions":150,
+    "Groceries":1100,"Dining out":500,"Auto insurance":2400,"Gas or charging":300,"Registration and maintenance":1500,"Future vehicle replacement":500,
+    "Travel and vacations":8000,"Hobbies and activities":300,"Entertainment":200,"Subscriptions and streaming":80,"Gifts and holidays":3000,"Charitable giving":2000,
+    "Clothing":150,"Personal care":100,"Pets":100,"Help for children or grandchildren":0,"Insurance (life, umbrella)":1200,"Accountant and advisor fees":600,"Cushion for surprises":1000};
+  E.budget.forEach(b=>{ if(amt[b.item]!=null) b.amt=amt[b.item]; b.dt=todayISO(); });
+  // Spouse is 63 at retirement: two years of ACA coverage until they reach Medicare
+  // Ages on budget lines are yours: you're 65 and 66 while your spouse is 63 and 64, so this covers the spouse until Medicare at 65
+  const aca=E.budget.find(b=>/ACA/.test(b.item)); aca.start=65; aca.end=66;
+  // Mortgage: $1,500 a month (a fixed payment), paid off after age 74
+  const mort=E.budget.find(b=>/^Mortgage/.test(b.item)); Object.assign(mort,{amt:1500,end:74,endLink:false});
+  return fromSaved(E);
+}
 function syncLinkedEnds(){
   const e=+S.endAge;
   for(const b of S.budget) if(b.endLink) b.end=e;
@@ -1416,7 +1457,7 @@ function taxProject(rows, mode, convert){
   rows.forEach((r,y)=>{ b[0]+=r.contrib;
     const T0=b[0]; taxStep(K, y, b, r.before-r.income-r.lump, convert, o);
     const pt=taxParts(K, y, o.w+o.conv, o.g);
-    out.push({age:r.age, tax:o.tax, parts:pt, g:o.g, pen:K.age[y]<60?0.1*o.w:0, conv:o.conv, ctax:o.ctax, rmd:o.rmd, w:o.w, T0, T:b[0], Ro:b[3], B:b[1], C:b[2], short:o.short, capped:o.conv>0 && K.capped[y],
+    out.push({age:r.age, tax:o.tax, parts:pt, g:o.g, pen:K.age[y]<60?0.1*o.w:0, conv:o.conv, ctax:o.ctax, rmd:o.rmd, w:o.w, T0, T:b[0], Ro:b[3], B:b[1], C:b[2], short:o.short, capped:o.conv>0 && K.capped[y], after:pt.ordTI,
       before:Math.max(0, K.base[y]+o.w+rcTaxSS(K.base[y]+o.w+0.5*K.ss[y], K.ss[y], K.b1[y], K.b2[y])-K.std[y])});
     for(let k=0;k<4;k++) b[k]*=1+g; });
   return {rows:out, K, end:b};
@@ -2053,7 +2094,7 @@ function rothProject(rows, convert){
     if(r.age===75){ T75=r.T0; firstRMD=r.rmd; }
     if(r.age>=S.retireAge){ life+=r.tax; if(r.age>=75) late+=r.tax; }
     convTot+=r.conv; convTax+=r.ctax; short+=r.short;
-    return {age:r.age, before:r.before, conv:r.conv, ctax:r.ctax, tax:r.tax, room:Math.max(0, top-r.before), rmd:r.rmd, T:r.T, Ro:r.Ro, capped:r.capped};
+    return {age:r.age, before:r.before, after:Math.max(r.before, r.after), conv:r.conv, ctax:r.ctax, tax:r.tax, room:Math.max(0, top-r.before), rmd:r.rmd, T:r.T, Ro:r.Ro, capped:r.capped};
   });
   const [T,B,C,Ro]=P.end;
   return {rows:out, life, late, convTot, convTax, T75:T75??T, firstRMD, Tend:T, Rend:Ro, Bend:B+C, short, net:Ro+B+C+T*(1-RC_LEFT)};
@@ -2070,12 +2111,13 @@ function rothRender(rows){
     (w.convTot>0 ? `Suggested: convert about <b>${fmt$(w.convTot/Math.max(1,w.rows.filter(r=>r.conv>0).length))}</b> a year from ${R.from} to ${R.to}.` : "No room to convert with these settings.") +
     (w.rows.some(r=>r.capped) ? ` <span style="font-weight:400;color:var(--text-2)">In some years your IRMAA limit (${fmt$(+R.irmaa)} of income, before the standard deduction) stops conversions below the ${brkRate(R.top)}% bracket top. Those years are marked * in the table.</span>` : "");
   // Chart: income already (gray) + conversion (blue), with bracket tops
-  const xs=ret.map(r=>r.age), maxV=Math.max(...ret.map(r=>r.before+r.conv), top*1.08);
+  const xs=ret.map(r=>r.age), maxV=Math.max(...ret.map(r=>r.after), top*1.08);
   const sc=niceScale(maxV), {X,Y,g}=axes(xs,sc.max,fmtK,sc.ticks);
   const bw=Math.max(3, (xs.length>1?(X(xs[1])-X(xs[0])):20)*0.7);
   let bars=""; ret.forEach(r=>{ const x=X(r.age)-bw/2;
     bars+=`<rect x="${x}" y="${Y(r.before)}" width="${bw}" height="${Math.max(0,Y(0)-Y(r.before))}" fill="var(--muted)" opacity=".45"/>`;
-    if(r.conv>0) bars+=`<rect x="${x}" y="${Y(r.before+r.conv)}" width="${bw}" height="${Math.max(0,Y(r.before)-Y(r.before+r.conv))}" fill="var(--c-trad)"/>`; });
+    // Blue = how much the conversion raises taxable income (part of it can first use up unused standard deduction)
+    if(r.conv>0 && r.after>r.before) bars+=`<rect x="${x}" y="${Y(r.after)}" width="${bw}" height="${Math.max(0,Y(r.before)-Y(r.after))}" fill="var(--c-trad)"/>`; });
   let lines=""; for(const [k,v] of Object.entries(RC_TOPS)) if(v<=sc.max){ lines+=`<line x1="${M.l}" x2="${W-M.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--text-2)" stroke-width="${+k===+R.top?1.5:1}" stroke-dasharray="5 4" opacity="${+k===+R.top?1:.5}"/><text x="${W-M.r-4}" y="${Y(v)-4}" text-anchor="end">${brkRate(k)}% bracket top</text>`; }
   // IRMAA limit from 63, shown as taxable income (the limit minus the standard deduction), so it steps down at 65
   let irm="";
@@ -2140,6 +2182,7 @@ function init(){
     if(dl){ try{ await dl.save({filename:fname, data:blob}); }catch(e){ if(e && e.code!=="declined") alert("Couldn't save the file here."); } return; }
     const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
   $("importBtn").onclick=()=>$("importFile").click();
+  $("exampleBtn").onclick=()=>{ if(!confirm("Replace your numbers with the example plan? Click Save a copy first if you want to keep yours.")) return; delete $("rebalTbl").dataset.built; S=examplePlan(); save(); fillSimple(); renderTables(); run(); };
   // About: opens from the header link, and once on a first visit (nothing saved yet)
   const ab=$("about"); $("aboutBtn").onclick=()=>ab.showModal(); $("aboutClose").onclick=()=>ab.close();
   ab.addEventListener("click",e=>{ const r=ab.getBoundingClientRect(); if(e.target===ab && (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)) ab.close(); });
