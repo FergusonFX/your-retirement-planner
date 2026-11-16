@@ -247,6 +247,7 @@ table.brk .from{color:var(--text-2)}
 #about .aboutsig{text-align:right;margin:-6px 8px 14px 0;font-style:italic;font-weight:600;color:var(--text-2)}
 #about .aboutfine{color:var(--text-2);font-size:13px}
 #about .aboutbtns{display:flex;justify-content:flex-end;margin-top:6px}
+.sublbl{display:block;font-size:12px;font-weight:400;color:var(--text-2);margin-top:1px}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
 </style>
 </head>
@@ -271,7 +272,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
     <div class="filebtns">
       <button class="btn" id="exportBtn" title="Your changes are saved automatically in this browser. This saves a backup file you can load later or on another computer.">Save a copy</button>
       <button class="btn" id="importBtn" title="Load a .json file saved with Save a copy">Load a copy</button>
-      <button class="btn" id="exampleBtn" title="Fills in a sample plan: a married couple, 62 and 60, retiring at 65 with about $1 million saved. It replaces your numbers, and asks first.">Load an example</button>
+      <button class="btn" id="exampleBtn" title="Fills in a sample plan: a married couple, 62 and 60. You retire at 65, your spouse works two more years, and you have about $1 million saved. It replaces your numbers, and asks first.">Load an example</button>
       <button class="btn" id="resetBtn" title="Clears everything back to the blank starting values. It asks first, so save a copy before if you want to keep your numbers.">Reset</button>
       <input type="file" id="importFile" accept=".json,application/json" style="display:none">
     </div></div></div>
@@ -298,14 +299,16 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
       <div class="grid2" style="align-items:start">
         <div class="stack">
           <label class="f">Your age today<input id="currentAge" type="number" min="30" max="90"></label>
-          <label class="f">How much you save per year until retirement<input id="pSave" class="money"></label>
+          <label class="f">How much you save per year until retirement<span class="sublbl">What comes out of your paycheck, plus any employer match</span><input id="pSave" class="money"></label>
           <label class="f">You retire at age<input id="retireAge" type="number" min="30" max="90"></label>
           <label class="f">Plan runs through age (your age)<input id="endAge" type="number" min="60" max="110"></label>
         </div>
         <div class="stack">
           <div class="f"><label class="sphead"><input type="checkbox" id="spOn"> <span>Spouse</span><span class="spopt">'s age today</span></label>
             <input id="jessAge" class="spopt" type="number" min="30" max="90" aria-label="Spouse's age today"></div>
-          <label class="f spopt">How much your spouse saves per year until retirement<input id="jSave" class="money"></label>
+          <label class="f spopt">How much your spouse saves per year until retirement<span class="sublbl">What comes out of their paycheck, plus any employer match</span><input id="jSave" class="money"></label>
+          <label class="f spopt">Your spouse retires at age (their age)<input id="jRetire" type="number" min="30" max="90"></label>
+          <label class="f spopt payopt" title="Yearly salary before any taxes or savings come out, in today's dollars. Used in the years one of you is retired and the other still works. Payroll tax, their savings and income tax are taken out for you."><span id="payLbl">Yearly salary, before taxes, while one of you still works</span><input id="workPay" class="money"></label>
           <p class="note spopt" style="margin:0">With a spouse, taxes use married-filing-jointly brackets, and the spouse's Social Security is added. Without one, single-filer brackets.</p>
         </div>
       </div>
@@ -691,7 +694,7 @@ const HOLDINGS = [
 ];
 const DEFAULTS = {
   holdings: HOLDINGS.map(([acct,tick,desc,amt,group])=>({acct,tick,desc,amt,group})),
-  ver:9, spouse:false, currentAge:50, jessAge:50, retireAge:65, endAge:95, pSave:0, jSave:0,
+  ver:9, spouse:false, currentAge:50, jessAge:50, retireAge:65, jRetire:65, workPay:0, endAge:95, pSave:0, jSave:0,
   accounts:[
     {name:"Your 401(k)",type:"Traditional",bal:0},
     {name:"Your Roth IRA",type:"Roth",bal:0},
@@ -777,7 +780,13 @@ DEFAULTS.budget.forEach(b=>b.link=linkDefault(b, DEFAULTS.retireAge));
 const FLEX_RE = /dining|travel|vacation|hobb|entertain|subscription|gym|club|gift|charit|clothing|big project|vehicle replacement|help for children/i;
 DEFAULTS.budget.forEach(b=>b.flex=FLEX_RE.test(b.item||""));
 // When the retirement age changes, move every linked line's From age with it
-function syncLinkedStarts(){ for(const b of S.budget) if(b.link && !(b.homeLink && S.home.plan==="rent")) b.start=+S.retireAge; }
+// Retirement ages, all as YOUR age. The spouse's retirement age is entered as their own age.
+function jRetMine(){ return +S.jRetire - (+S.jessAge) + (+S.currentAge); }
+// Household retirement: spending from savings starts when the first of you retires
+function hhRet(){ return S.spouse ? Math.min(+S.retireAge, jRetMine()) : +S.retireAge; }
+// Both retired (no paycheck left)
+function bothRet(){ return S.spouse ? Math.max(+S.retireAge, jRetMine()) : +S.retireAge; }
+function syncLinkedStarts(){ const ra=hhRet(); for(const b of S.budget) if(b.link && !(b.homeLink && S.home.plan==="rent")) b.start=ra; }
 // "To age" (and rental income, last spending phase) follow the plan's end age unless changed by hand
 function setEndLinks(o, endAge){
   for(const b of o.budget||[]) if(b.endLink===undefined) b.endLink = +b.end===+endAge;
@@ -785,11 +794,11 @@ function setEndLinks(o, endAge){
   const lp=(o.phases||[])[(o.phases||[]).length-1]; if(lp && lp.endLink===undefined) lp.endLink = +lp.through===+endAge;
 }
 setEndLinks(DEFAULTS, DEFAULTS.endAge);
-// "Load an example": a married couple, 62 and 60, retiring at 65 with about $1 million and a mortgage paid off at 74, and about $110,000–120,000 a year of spending.
+// "Load an example": a married couple, 62 and 60. You retire at 65; your spouse works 2 more years (to their 65, $60,000 salary). About $1 million and a mortgage paid off at 74, and about $110,000–120,000 a year of spending.
 // Tuned to land near 85% Monte Carlo success.
 function examplePlan(){
   const E=clone(DEFAULTS);
-  Object.assign(E,{spouse:true,currentAge:62,jessAge:60,retireAge:65,endAge:95,pSave:24000,jSave:12000});
+  Object.assign(E,{spouse:true,currentAge:62,jessAge:60,retireAge:65,jRetire:65,workPay:60000,endAge:95,pSave:24000,jSave:12000});
   E.accounts=[
     {id:"ex401p",name:"Your 401(k)",type:"Traditional",bal:470000},
     {id:"ex401s",name:"Spouse's 401(k)",type:"Traditional",bal:210000},
@@ -813,13 +822,14 @@ function examplePlan(){
   E.roth.irmaa=218000;  // married filing jointly IRMAA limit
   E.wd.age=65;
   const amt={"Property tax":6000,"Home insurance":2400,"Electric, gas, water, trash":400,"Internet, phone, TV":200,"Maintenance and repairs":5000,
-    "Health insurance before Medicare (ACA)":9000,"Medicare premiums (B, D)":480,"Medigap / Advantage plan":400,"Dental and vision":100,"Copays and prescriptions":150,
+    "Health insurance before Medicare (ACA)":0,"Medicare premiums (B, D)":480,"Medigap / Advantage plan":400,"Dental and vision":100,"Copays and prescriptions":150,
     "Groceries":1100,"Dining out":500,"Auto insurance":2400,"Gas or charging":300,"Registration and maintenance":1500,"Future vehicle replacement":500,
-    "Travel and vacations":8000,"Hobbies and activities":300,"Entertainment":200,"Subscriptions and streaming":80,"Gifts and holidays":3000,"Charitable giving":2000,
-    "Clothing":150,"Personal care":100,"Pets":100,"Help for children or grandchildren":0,"Insurance (life, umbrella)":1200,"Accountant and advisor fees":600,"Cushion for surprises":1000};
+    "Travel and vacations":10000,"Hobbies and activities":300,"Entertainment":200,"Subscriptions and streaming":80,"Gifts and holidays":3000,"Charitable giving":2000,
+    "Clothing":150,"Personal care":100,"Pets":100,"Help for children or grandchildren":2000,"Insurance (life, umbrella)":1200,"Accountant and advisor fees":600,"Cushion for surprises":2000};
   E.budget.forEach(b=>{ if(amt[b.item]!=null) b.amt=amt[b.item]; b.dt=todayISO(); });
   // Spouse is 63 at retirement: two years of ACA coverage until they reach Medicare
-  // Ages on budget lines are yours: you're 65 and 66 while your spouse is 63 and 64, so this covers the spouse until Medicare at 65
+  // The spouse keeps working (and keeps their work health insurance) until Medicare at 65, so no ACA years are needed.
+  // Ages on budget lines are yours: the spouse is 63 and 64 while you're 65 and 66.
   const aca=E.budget.find(b=>/ACA/.test(b.item)); aca.start=65; aca.end=66;
   // Mortgage: $1,500 a month (a fixed payment), paid off after age 74
   const mort=E.budget.find(b=>/^Mortgage/.test(b.item)); Object.assign(mort,{amt:1500,end:74,endLink:false});
@@ -906,6 +916,8 @@ function fromSaved(o){
   if(o && Array.isArray(o.budget)) for(const b of o.budget) if(!b.dt) b.dt=todayISO();
   // Tax brackets: fill in anything missing from the 2026 numbers
   if(o){ const d=clone(DEFAULTS.brk), b=o.brk||{}; o.brk=Object.assign(d, b, {mfj:Object.assign(d.mfj, b.mfj||{}), single:Object.assign(d.single, b.single||{})}); }
+  // Spouse's retirement age: older saves retired you both in the same year
+  if(o && o.jRetire===undefined){ const ra=+(o.retireAge ?? DEFAULTS.retireAge), ca=+(o.currentAge ?? DEFAULTS.currentAge), ja=+(o.jessAge ?? ca); o.jRetire=ra-ca+ja; o.workPay=0; }
   if(o && o.spouse===undefined){ const j=(o.ss&&o.ss.j)||{}; o.spouse = (+o.jSave>0) || Object.values(j).some(v=>+v>0); }
   // Rental sale is now a checkbox: on if a sale age was set
   if(o && o.rental && o.rental.sellOn===undefined) o.rental.sellOn = o.rental.sell!=null && o.rental.sell!=="";
@@ -924,12 +936,14 @@ const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 /* ---------------- Input binding ---------------- */
 const $ = id => document.getElementById(id);
 const simple = [
-  ["currentAge",()=>S.currentAge,v=>{ S.currentAge=num(v); budDismissed=false; budInflUI(); }],
-  ["retireAge",()=>S.retireAge,v=>{ S.retireAge=num(v); syncLinkedStarts(); renderTables(); badStartUI(); lostDecadeUI(); }],
+  ["currentAge",()=>S.currentAge,v=>{ S.currentAge=num(v); budDismissed=false; budInflUI(); retireChanged(); }],
+  ["retireAge",()=>S.retireAge,v=>{ S.retireAge=num(v); retireChanged(); }],
+  ["jRetire",()=>S.jRetire,v=>{ S.jRetire=num(v); retireChanged(); }],
+  ["workPay",()=>S.workPay,v=>S.workPay=num(v),true],
   ["wdAge",()=>S.wd.age,v=>{ S.wd.age=num(v); wdRender(); }],
   ["wdYears",()=>S.wd.years,v=>{ S.wd.years=num(v); wdRender(); }],
   ["endAge",()=>S.endAge,v=>{ S.endAge=num(v); syncLinkedEnds(); renderTables(); }],
-  ["jessAge",()=>S.jessAge,v=>S.jessAge=num(v)],
+  ["jessAge",()=>S.jessAge,v=>{ S.jessAge=num(v); retireChanged(); }],
   ["pSave",()=>S.pSave,v=>S.pSave=num(v),true],
   ["jSave",()=>S.jSave,v=>S.jSave=num(v),true],
   ["aStocks",()=>S.alloc.stocks,v=>S.alloc.stocks=num(v)],
@@ -963,7 +977,7 @@ const simple = [
   ["stB",()=>S.stress.bMean,v=>{S.stress.bMean=num(v); stressUI();}],
   ["stC",()=>S.stress.cMean,v=>{S.stress.cMean=num(v); stressUI();}],
   ["bsYears",()=>S.badStart.years,v=>{S.badStart.years=num(v); badStartUI();}],
-  ["ldStart",()=>ldStartAge(),v=>{ const a=num(v); S.lostDecade.start = a===+S.retireAge ? null : a; lostDecadeUI(); }],
+  ["ldStart",()=>ldStartAge(),v=>{ const a=num(v); S.lostDecade.start = a===hhRet() ? null : a; lostDecadeUI(); }],
   ["bsS",()=>S.badStart.sMean,v=>{S.badStart.sMean=num(v); badStartUI();}],
   ["bsB",()=>S.badStart.bMean,v=>{S.badStart.bMean=num(v); badStartUI();}],
   ["sims",()=>S.market.sims,v=>S.market.sims=num(v)],
@@ -1016,7 +1030,7 @@ function bindSimple(){
   $("hRent").addEventListener("input",()=>{ const v=num($("hRent").value); S.home.rentMo=v; const b=rentLine(); if(b && S.home.plan==="rent"){ b.amt=v; b.per="Monthly"; b.dt=todayISO(); } homeUI(); renderTables(); changed(); });
   $("hRent").addEventListener("blur",()=>{ $("hRent").value=Math.round(num($("hRent").value)).toLocaleString("en-US"); });
   $("rInfl").addEventListener("change",e=>{ S.rental.infl=e.target.checked; changed(); });
-  $("spOn").addEventListener("change",e=>{ S.spouse=e.target.checked;
+  $("spOn").addEventListener("change",e=>{ S.spouse=e.target.checked; syncLinkedStarts(); renderTables();
     // IRMAA limit: swap the standard single and joint amounts if it hasn't been changed by hand
     if(S.spouse && +S.roth.irmaa===109000) S.roth.irmaa=218000; else if(!S.spouse && +S.roth.irmaa===218000) S.roth.irmaa=109000;
     $("rcIrmaa").value=Math.round(+S.roth.irmaa||0).toLocaleString("en-US"); spouseUI(); taxUI(); renderBrk(); changed(); });
@@ -1049,7 +1063,7 @@ function rentPlanOn(){
 }
 function rentPlanOff(){
   const H=S.home, b=rentLine();
-  if(b){ if(H.rentPrev){ Object.assign(b, H.rentPrev); } else { b.amt=0; } b.homeLink=false; if(b.link) b.start=+S.retireAge; }
+  if(b){ if(H.rentPrev){ Object.assign(b, H.rentPrev); } else { b.amt=0; } b.homeLink=false; if(b.link) b.start=hhRet(); }
   H.rentPrev=null;
 }
 // Show the downsize fields only when chosen, plus a short explanation
@@ -1057,6 +1071,9 @@ function homeUI(){
   const H=S.home, plan=H.plan==="sell"||H.plan==="rent"?H.plan:"keep";
   $("hDown").checked = plan==="sell"; $("hRentOn").checked = plan==="rent";
   document.querySelectorAll(".hopt").forEach(el=>{ el.style.display = plan==="keep" ? "none" : ""; });
+  // The age and amount boxes, and the note, sit right under whichever box is checked (under both boxes when neither is)
+  { const ob=document.querySelector(".optbody.hopt"), nt=$("hNote"), at=$(plan==="sell"?"hDown":"hRentOn").closest("label");
+    if(ob && at && ob.previousElementSibling!==at){ at.after(ob); ob.after(nt); } }
   document.querySelectorAll(".hdownopt").forEach(el=>{ el.style.display = plan==="sell" ? "" : "none"; });
   document.querySelectorAll(".hrentopt").forEach(el=>{ el.style.display = plan==="rent" ? "" : "none"; });
   if(plan==="keep"){ $("hNote").innerHTML="The home isn't part of your invested money and isn't used to pay for retirement."; return; }
@@ -1076,7 +1093,7 @@ function homeUI(){
 }
 // Stagflation fields show only when the test is on
 // Ages covered by the bad-start test
-function badStartAges(){ const B=S.badStart; return [+S.retireAge, +S.retireAge+Math.max(1,+B.years||1)-1]; }
+function badStartAges(){ const B=S.badStart, a=hhRet(); return [a, a+Math.max(1,+B.years||1)-1]; }
 function badStartUI(){
   const B=S.badStart; document.querySelectorAll(".bsopt").forEach(el=>el.style.display=B.on?"":"none");
   if(!B.on) return;
@@ -1091,7 +1108,7 @@ const LOST_DECADE = {
   b:[11.6,8.4,10.3,4.1,4.3,2.4,4.3,7.0,5.2,5.9],
   c:[5.8,3.4,1.6,1.0,1.4,3.2,4.7,4.4,1.4,0.2]
 };
-function ldStartAge(){ const L=S.lostDecade; return L && L.start!=null && L.start!=="" ? +L.start : +S.retireAge; }
+function ldStartAge(){ const L=S.lostDecade; return L && L.start!=null && L.start!=="" ? +L.start : hhRet(); }
 function lostDecadeUI(){
   const L=S.lostDecade; document.querySelectorAll(".ldopt").forEach(el=>el.style.display=L.on?"":"none");
   const el=$("ldStart"); if(el && document.activeElement!==el){ el.value=ldStartAge(); el.classList.toggle("linked", L.start==null); }
@@ -1183,7 +1200,15 @@ function taxUI(){
     " The Tax column in Year by Year shows each year's tax on a typical market path.";
 }
 // Spouse box: show or hide everything about a spouse
-function spouseUI(){ document.body.classList.toggle("nosp", !S.spouse); }
+function spouseUI(){ document.body.classList.toggle("nosp", !S.spouse); payUI(); }
+// Either retirement age changed: linked budget ages follow the first retirement
+function retireChanged(){ syncLinkedStarts(); renderTables(); badStartUI(); lostDecadeUI(); payUI(); }
+// Take-home pay box: only when you retire in different years, labeled for whoever keeps working
+function payUI(){
+  const gap = S.spouse ? jRetMine() - (+S.retireAge) : 0;
+  document.querySelectorAll(".payopt").forEach(el=>el.style.display = gap ? "" : "none");
+  if(gap) $("payLbl").textContent = gap>0 ? "Your spouse's yearly salary, before taxes, after you retire" : "Your yearly salary, before taxes, after your spouse retires";
+}
 // Ages for hover text: "Age 70" alone, or "You 70, spouse 68"
 function who(a, j){ return S.spouse ? `You <b>${a}</b>, spouse <b>${j}</b>` : `Age <b>${a}</b>`; }
 function stressUI(){
@@ -1225,7 +1250,7 @@ function startInput(b){
   const home=()=>b.homeLink && S.home.plan==="rent";
   const i=ageInput(b.start,v=>{ b.start=v;
     if(home()){ S.home.age=v; $("hAge").value=v; homeUI(); style(); return; }
-    b.link=(v===+S.retireAge && !NO_LINK.test(b.item||"")); style(); });
+    b.link=(v===hhRet() && !NO_LINK.test(b.item||"")); style(); });
   const style=()=>{ i.classList.toggle("linked",!!b.link || home());
     i.title=home()?"Follows the home sale age (Sell and rent, on the Other Income page). Changing it here changes the sale age too.":b.link?"Follows your retirement age. Type a different age to set it by hand.":"Set by hand. Type your retirement age to link it again."; };
   style(); return i;
@@ -1337,6 +1362,11 @@ function totalBalance(){ return S.accounts.reduce((s,a)=>s+(+a.bal||0),0); }
 function ssMonthly(tbl, age){ return +tbl[age] || 0; }
 
 // How much the "Can cut" lines change: −cut% or +raise%, or 0 when neither box is checked
+// Payroll tax on a salary (employee share), 2026: Social Security 6.2% up to the wage base, Medicare 1.45%,
+// plus 0.9% Additional Medicare above $250,000 (married). The wage base rises with wages, so it's kept in today's dollars;
+// the $250,000 isn't indexed, so it shrinks in today's dollars (cumY = price level that year).
+const SS_WAGE_BASE=184500, ADD_MED_MFJ=250000, ADD_MED_SINGLE=200000;
+function payrollTax(w, cumY){ const t=(S.spouse?ADD_MED_MFJ:ADD_MED_SINGLE)/(cumY||1); return 0.062*Math.min(w,SS_WAGE_BASE) + 0.0145*w + 0.009*Math.max(0,w-t); }
 function guardMult(){ const G=S.guard||{}; return G.on ? -(+G.cut||0)/100 : G.raiseOn ? (+G.raise||0)/100 : 0; }
 function schedule(noGuard){
   const n = Math.max(1, S.endAge - S.currentAge + 1);
@@ -1345,7 +1375,12 @@ function schedule(noGuard){
   const rows=[];
   const H=S.home, homeOn = H && H.plan && H.plan!=="keep";
   for(let y=0;y<n;y++){
-    const age = S.currentAge + y, retired = age >= S.retireAge;
+    const age = S.currentAge + y, retired = age >= hhRet();
+    const pWork = age < +S.retireAge, jWork = S.spouse && age < jRetMine();
+    // One retired, one still working: their salary pays for part of the spending.
+    // wage = salary before taxes; save = their savings (taken from the paycheck before income tax)
+    const wage = retired && (pWork || jWork) ? (+S.workPay||0) : 0;
+    const save = wage ? Math.min(wage, jWork ? (+S.jSave||0) : (+S.pSave||0)) : 0;
     let before=0, flexB=0;
     if(retired){
       for(const b of S.budget){
@@ -1361,7 +1396,14 @@ function schedule(noGuard){
     const gm = noGuard ? 0 : guardMult();
     before += flexB*gm;
     before *= scale;
-    const spend = before*(1+tax), flex = flexB*scale*(1+tax), flexAdj = flex*gm;
+    let spend = before*(1+tax);
+    const flex = flexB*scale*(1+tax), flexAdj = flex*gm;
+    const fica = wage ? payrollTax(wage, cum[y]) : 0, wageTI = wage - save;
+    // Cash from the paycheck before income tax (the savings go in as "Savings added")
+    const pay = wage - fica - save;
+    // Flat tax: the salary's income tax is worked out on its own with the brackets and state %
+    let wTax = 0;
+    if(wage && taxMode()===1){ const ti=Math.max(0, wageTI-(RC_STD+RC_STD65*((age>=65)+(S.spouse&&(S.jessAge+y)>=65)))); wTax=rcBracketTax(ti)+((+S.roth.state||0)/100)*ti; spend+=wTax; }
     const adj = S.ss.adj/100;
     const pSS = age >= S.ss.pClaim ? ssMonthly(S.ss.p,S.ss.pClaim)*12*adj : 0;
     const jAge = S.jessAge + y;
@@ -1380,9 +1422,9 @@ function schedule(noGuard){
     // Downsize: sale proceeds pay cash for the new home; what's left goes to savings (or comes out of savings if short)
     if(homeOn && age===+H.age) homeLump = homeCash();
     lump += homeLump;
-    const contrib = retired ? 0 : (+S.pSave||0) + (S.spouse ? (+S.jSave||0) : 0);
-    const income = pSS + jSS + rent + other;
-    rows.push({age, jAge, phase: retired?phaseName(age):"Working", before, spend, tax: spend-before, flex, flexAdj, pSS, jSS, rent, other, income, lump, homeLump, contrib,
+    const contrib = (pWork ? (+S.pSave||0) : 0) + (jWork ? (+S.jSave||0) : 0);
+    const income = pSS + jSS + rent + other + pay;
+    rows.push({age, jAge, phase: !retired?"Working":(pWork||jWork)?"One working":phaseName(age), before, spend, tax: spend-before, flex, flexAdj, pSS, jSS, rent, other, pay, wage, fica, wageTI, wTax, income, lump, homeLump, contrib,
                net: spend - income - contrib - lump});
   }
   return rows;
@@ -1399,14 +1441,14 @@ function taxCtx(rows, mode){
   const K={n, mode, gain:Math.min(1,Math.max(0,(+X.gains||0)/100)), st:(+R.state||0)/100, age:[], ss:[], b1:[], b2:[], std:[], base:[], div:[], fill:[], convTo:[], capped:[]};
   const topFill=RC_TOPS[+X.fill]||RC_TOPS[22], topConv=RC_TOPS[+R.top]||RC_TOPS[22];
   rows.forEach((r,y)=>{
-    const ss=r.pSS+r.jSS, b1=SS_B1/cum[y], b2=SS_B2/cum[y], std=RC_STD+RC_STD65*((r.age>=65)+(S.spouse&&r.jAge>=65)), base=r.rent+r.other;
+    const ss=r.pSS+r.jSS, b1=SS_B1/cum[y], b2=SS_B2/cum[y], std=RC_STD+RC_STD65*((r.age>=65)+(S.spouse&&r.jAge>=65)), base=r.rent+r.other+(r.wageTI||0);
     K.age[y]=r.age; K.ss[y]=ss; K.b1[y]=b1; K.b2[y]=b2; K.std[y]=std; K.base[y]=base;
     K.div[y]=r.age>=75 ? (RC_RMD[Math.min(r.age,100)]||6.4) : 0;
     // How much Tax Deferred income (x) fits under a limit
     const agi=x=>{ const o=x+base; return o+rcTaxSS(o+0.5*ss, ss, b1, b2); };
     const most=ok=>{ if(!ok(0)) return 0; let lo=0, hi=2e7; for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(ok(m)) lo=m; else hi=m; } return lo; };
     K.fill[y]=most(x=>agi(x)-std<=topFill);
-    const inWin=r.age>=+R.from && r.age<=+R.to && r.age>=S.retireAge, cap=(+R.irmaa>0 && r.age>=63) ? +R.irmaa : Infinity;
+    const inWin=r.age>=+R.from && r.age<=+R.to && r.age>=hhRet(), cap=(+R.irmaa>0 && r.age>=63) ? +R.irmaa : Infinity;
     const toTop=inWin ? most(x=>agi(x)-std<=topConv) : -1;
     K.convTo[y]=inWin ? Math.min(toTop, cap<Infinity ? most(x=>agi(x)<=cap) : toTop) : -1;
     K.capped[y]=inWin && K.convTo[y]<toTop-1;
@@ -1587,18 +1629,31 @@ function render({rows,res,base,bands,sims,safeMult}){
   $("statusLine").innerHTML = `<i class="dot" style="background:${col}"></i><span>${label}</span>`;
   $("navPct").innerHTML = `<span class="np"><i class="dot" style="background:${col}"></i><span>${pct>=99.95?"100":pct.toFixed(pct<10?1:0)}%</span></span><small>Monte Carlo<br>success</small>`;
   $("heroText").textContent = `In ${Math.round(pct*sims/100).toLocaleString()} of ${sims.toLocaleString()} simulated market histories, the money lasted through age ${S.endAge}.` + (taxMode()===2 ? " Taxes are worked out by account (Standard order)." : taxMode()===3 ? ` Taxes are worked out by account (Fill the ${brkRate(S.tax.fill)}% bracket order).` : "") + (taxMode()>1 && S.tax.rothPlan ? " Includes the Roth conversions." : "") + (S.guard.on ? ` "Can cut" spending is lowered ${S.guard.cut}%.` : S.guard.raiseOn ? ` "Can cut" spending is raised ${S.guard.raise}%.` : "") + (S.lostDecade.on ? ` Includes a lost decade at ages ${ldStartAge()}–${ldStartAge()+9}.` : "") + (S.badStart.on ? ` Includes bad markets at ages ${badStartAges().join("–")}.` : "") + (S.stress.on ? ` Includes a stagflation period at ages ${S.stress.start}–${+S.stress.start+(+S.stress.years)-1}.` : "");
-  const firstRet = rows.find(r=>r.age>=S.retireAge) || rows[0];
+  const firstRet = rows.find(r=>r.age>=hhRet()) || rows[0];
   const sortedFail=res.failAges.slice().sort((a,b)=>a-b);
   $("heroSub").textContent = res.failAges.length ? `When it ran out, the typical age was ${Math.round(percentile(sortedFail,.5))}. The earliest 10% of failures happened by age ${Math.round(percentile(sortedFail,.1))}.` : "None of the simulations ran out of money.";
 
   const end=bands[bands.length-1];
-  const yrsToRet=Math.max(0,S.retireAge-S.currentAge);
-  const jRet=S.jessAge+yrsToRet;
-  $("ageNote").textContent = yrsToRet>0
-    ? (S.spouse ? `${yrsToRet} more working year${yrsToRet>1?"s":""}: you both stop when you're ${S.retireAge} (your spouse ${jRet}). Savings of ${fmt$((+S.pSave||0)+(+S.jSave||0))} a year are added until then`
-                : `${yrsToRet} more working year${yrsToRet>1?"s":""}: you stop at ${S.retireAge}. Savings of ${fmt$(+S.pSave||0)} a year are added until then`) +
-      `, and spending from savings starts at retirement. Include any employer match in the savings amounts.`
-    : `You're retired: spending comes from savings starting now.` + (S.spouse ? ` Your spouse's age is used for their Social Security start.` : "");
+  const hh=hhRet(), yrsToRet=Math.max(0,hh-S.currentAge);
+  const jOff=(+S.jessAge)-(+S.currentAge), pr=+S.retireAge, jr=jRetMine(), yrs=n=>`${n} year${n===1?"":"s"}`;
+  let note;
+  if(!S.spouse || pr===jr){
+    note = yrsToRet>0
+      ? (S.spouse ? `${yrs(yrsToRet)} more working: you both stop when you're ${pr} (your spouse ${pr+jOff}). Savings of ${fmt$((+S.pSave||0)+(+S.jSave||0))} a year are added until then`
+                  : `${yrs(yrsToRet)} more working: you stop at ${pr}. Savings of ${fmt$(+S.pSave||0)} a year are added until then`) +
+        `, and spending from savings starts at retirement. Include any employer match in the savings amounts.`
+      : `You're retired: spending comes from savings starting now.` + (S.spouse ? ` Your spouse's age is used for their Social Security start.` : "");
+  } else {
+    const firstIsYou = pr<jr, a=Math.max(hh,+S.currentAge), b=Math.max(bothRet(),+S.currentAge), gap=b-a;
+    const p1 = firstIsYou ? `You retire at ${pr} (your spouse is ${pr+jOff})` : `Your spouse retires at ${S.jRetire} (you're ${jr})`;
+    const p2 = firstIsYou ? `your spouse retires at ${S.jRetire} (you're ${jr})` : `you retire at ${pr} (your spouse is ${pr+jOff})`;
+    note = `${p1}, and ${p2}. Spending from savings starts at ${hh}, when the first of you retires. ` +
+      (gap>0 ? `For ${yrs(gap)} one of you still works: their savings keep being added, and their salary of ${fmt$(+S.workPay||0)} a year helps pay for spending. Payroll tax and their savings come out of it, and its income tax is worked out with the rest of your taxes. ` : "") +
+      `Each of you adds savings until your own retirement. Include any employer match in the savings amounts.` +
+      (gap>0 && !(+S.workPay>0) ? ` Enter the salary above, or those years are paid from savings.` : "") +
+      (gap>0 && (firstIsYou ? +S.ss.jClaim<+S.jRetire && +S.ss.jClaim<67 : +S.ss.pClaim<pr && +S.ss.pClaim<67) ? ` Claiming Social Security before 67 while still working can mean some checks are held back (the earnings test), which this plan doesn't show.` : "");
+  }
+  $("ageNote").textContent = note;
   const atRet = bands[Math.max(0,yrsToRet-1)];
   const startBal=totalBalance();
   const retBal = yrsToRet>0 ? atRet.p50 : startBal;
@@ -1606,7 +1661,7 @@ function render({rows,res,base,bands,sims,safeMult}){
   const safeSpend = firstRet.spend*safeMult;
   const st=[
     ["Savings today", fmt$(startBal)],
-    ...(yrsToRet>0?[[`Typical savings at retirement (${S.retireAge})`, `${fmtK(atRet.p50)}<div class="note" style="margin:0">bad case ${fmtK(atRet.p10)}</div>`]]:[]),
+    ...(yrsToRet>0?[[`Typical savings at retirement (${hh})`, `${fmtK(atRet.p50)}<div class="note" style="margin:0">bad case ${fmtK(atRet.p10)}</div>`]]:[]),
     [`Spending at ${firstRet.age} (incl. tax)`, fmt$(firstRet.spend)],
     ["First-year withdrawal rate", wr.toFixed(1)+"%"],
     [`Typical balance at ${end.age}`, fmtK(end.p50)],
@@ -1626,7 +1681,7 @@ function render({rows,res,base,bands,sims,safeMult}){
   $("sumSS").textContent = fmtK(ssBoth)+"/yr";
   $("sumSpend").textContent = fmtK(firstRet.spend)+"/yr at "+firstRet.age;
   $("sumTax").textContent = (taxMode()===1 ? `Flat ${+S.taxPct}%` : taxMode()===2 ? "Standard order" : `Fill the ${brkRate(S.tax.fill)}% bracket order`) + ` · ${fmtK(firstRet.tax||0)} at ${firstRet.age}`;
-  const oth = (S.dst.on ? (+S.dst.income||0) : (+S.rental.income||0)) + S.income.reduce((s,r)=>s+(+r.amt||0),0);  // the DST replaces the rental
+  const oth = (S.dst.on ? (+S.dst.income||0) : (+S.rental.income||0)) + S.income.reduce((s,r)=>s+(+r.amt||0),0) + (S.spouse && jRetMine()!==+S.retireAge ? (+S.workPay||0) : 0);  // the DST replaces the rental
   $("sumOther").textContent = oth? fmtK(oth)+"/yr" : "none yet";
 
   guardRender(rows,res,base,firstRet);
@@ -1932,7 +1987,7 @@ function flowChart(rows){
     <path d="${step("income")}" fill="none" stroke="var(--s1)" stroke-width="2.5"/>
     <line class="cross" y1="${M.t}" y2="${H-M.b}" stroke="var(--text-2)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
     <rect x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/></svg><div class="tip"></div>`;
-  hover(el,xs,X,i=>{const r=rows[i]; return `${who(r.age, r.jAge)} · ${r.phase}<br>${r.contrib?`Savings added: <b>${fmt$(r.contrib)}</b><br>`:""}Spending: <b>${fmt$(r.spend)}</b><br>Social Security: <b>${fmt$(r.pSS+r.jSS)}</b><br>Other income: <b>${fmt$(r.rent+r.other)}</b><br>From savings: <b>${fmt$(Math.max(0,r.net))}</b>${r.lump-r.homeLump?`<br>Rental sale adds: <b>${fmt$(r.lump-r.homeLump)}</b>`:""}${r.homeLump?`<br>${r.homeLump>0?"Downsizing adds":"Downsizing takes from savings"}: <b>${fmt$(Math.abs(r.homeLump))}</b>`:""}`;});
+  hover(el,xs,X,i=>{const r=rows[i]; return `${who(r.age, r.jAge)} · ${r.phase}<br>${r.contrib?`Savings added: <b>${fmt$(r.contrib)}</b><br>`:""}Spending: <b>${fmt$(r.spend)}</b><br>Social Security: <b>${fmt$(r.pSS+r.jSS)}</b><br>Other income: <b>${fmt$(r.rent+r.other+r.pay)}</b><br>From savings: <b>${fmt$(Math.max(0,r.net))}</b>${r.lump-r.homeLump?`<br>Rental sale adds: <b>${fmt$(r.lump-r.homeLump)}</b>`:""}${r.homeLump?`<br>${r.homeLump>0?"Downsizing adds":"Downsizing takes from savings"}: <b>${fmt$(Math.abs(r.homeLump))}</b>`:""}`;});
 }
 // Withdrawal plan for one age: split that year's "From savings" across holding groups for a down, flat or up market
 let lastRows=null;
@@ -1991,7 +2046,7 @@ function wdRender(){
   const cum=inflCum(rows.length), y=age-S.currentAge, f = row ? cum[Math.max(0,Math.min(y,rows.length))] : 1, nominal=need*f;
   wdF=f;
   if(!row) $("wdNeed").innerHTML=`Age ${age} is outside the plan (${S.currentAge}–${S.endAge}).`;
-  else if(age<S.retireAge) $("wdNeed").innerHTML=`At ${age} you're still working, so savings are added that year instead of withdrawn.`;
+  else if(age<hhRet()) $("wdNeed").innerHTML=`At ${age} you're still working, so savings are added that year instead of withdrawn.`;
   else if(need<=0) $("wdNeed").innerHTML=`At ${age} your income covers spending, so nothing comes out of savings. Extra income could refill cash.`;
   else $("wdNeed").innerHTML=`At ${age} you take <b>${fmt$(need)}</b> from savings in today's dollars` + (f>1.0005?` <span class="nom">(about <b>${fmt$(nominal)}</b> in that year's dollars)</span>.`:".");
   let h=`<thead><tr><th>Group</th>${WD_COLS.map(([k,t,sub])=>`<th class="num">${t}<small>${sub}</small></th>`).join("")}</tr></thead><tbody>`;
@@ -2043,8 +2098,10 @@ function wdRefill(need){
 // Hover text for a Tax cell: which option is checked and how that year's tax was worked out
 function taxTip(r){
   const m=taxMode();
-  if(m===1) return `Flat tax (checked under Taxes): ${+S.taxPct}% of ${fmt$(r.before)} spending = ${fmt$(r.tax)}`;
+  const sal = r.wage>0.5 ? `Salary ${fmt$(r.wage)}: payroll tax ${fmt$(r.fica)} and savings ${fmt$(r.wage-r.fica-r.pay)} come out first (shown under Other inc. as ${fmt$(r.pay)}).` : "";
+  if(m===1) return `Flat tax (checked under Taxes): ${+S.taxPct}% of ${fmt$(r.before)} spending = ${fmt$(r.tax-(r.wTax||0))}` + (r.wTax>0.5 ? `\nIncome tax on the salary (brackets and state %): ${fmt$(r.wTax)}` : "") + (sal?"\n"+sal:"");
   const q=r.taxInfo||{}, P=q.parts||{}, L=[`${m===2?"Standard order":`Fill the ${brkRate(S.tax.fill)}% bracket order`} (checked under Taxes): ${fmt$(r.tax)} on a typical market path`];
+  if(sal) L.push(sal, `Taxable salary (after pre-tax savings): ${fmt$(r.wageTI)}`);
   if(q.w>0.5) L.push(`From Tax Deferred: ${fmt$(q.w)}${q.rmd>0.5?` (RMD ${fmt$(q.rmd)})`:""}`);
   if(q.conv>0.5) L.push(`Roth conversion: ${fmt$(q.conv)}`);
   if(P.tss>0.5) L.push(`Taxable Social Security: ${fmt$(P.tss)}`);
@@ -2058,7 +2115,7 @@ function yearTable(rows,bands,res,sims){
   lastRows=rows; wdRender();
   let h=`<thead><tr><th>${S.spouse?"You":"Age"}</th><th class="spopt">Spouse</th><th>Phase</th><th class="num">Spending${S.guard.on?` <small>(${S.guard.cut}% cut)</small>`:S.guard.raiseOn?` <small>(${S.guard.raise}% raise)</small>`:""}</th><th class="num">Tax<small>${taxMode()===1?`Flat ${+S.taxPct}%`:taxMode()===2?"Standard order":`Fill the ${brkRate(S.tax.fill)}% bracket order`}</small></th><th class="num">Soc. Sec.</th><th class="num">Savings added</th><th class="num">Other inc.</th><th class="num">From savings</th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{ const b=bands[i];
-    h+=`<tr><td>${r.age}</td><td class="spopt">${r.jAge}</td><td>${esc(r.phase)}</td><td class="num">${fmt$(r.before)}</td><td class="num"${(r.tax||0)>0.5?` title="${esc(taxTip(r))}" style="cursor:help"`:""}>${fmt$(r.tax||0)}</td><td class="num">${fmt$(r.pSS+r.jSS)}</td><td class="num">${fmt$(r.contrib)}</td><td class="num">${fmt$(r.rent+r.other+r.lump)}</td><td class="num">${fmt$(Math.max(0,r.net))}</td></tr>`; });
+    h+=`<tr><td>${r.age}</td><td class="spopt">${r.jAge}</td><td>${esc(r.phase)}</td><td class="num">${fmt$(r.before)}</td><td class="num"${(r.tax||0)>0.5?` title="${esc(taxTip(r))}" style="cursor:help"`:""}>${fmt$(r.tax||0)}</td><td class="num">${fmt$(r.pSS+r.jSS)}</td><td class="num">${fmt$(r.contrib)}</td><td class="num">${fmt$(r.rent+r.other+r.pay+r.lump)}</td><td class="num">${fmt$(Math.max(0,r.net))}</td></tr>`; });
   $("yearTbl").innerHTML=h+"</tbody>";
 }
 
@@ -2092,7 +2149,7 @@ function rothProject(rows, convert){
   let life=0, late=0, convTot=0, convTax=0, firstRMD=0, T75=null, short=0;
   const out=P.rows.map(r=>{
     if(r.age===75){ T75=r.T0; firstRMD=r.rmd; }
-    if(r.age>=S.retireAge){ life+=r.tax; if(r.age>=75) late+=r.tax; }
+    if(r.age>=hhRet()){ life+=r.tax; if(r.age>=75) late+=r.tax; }
     convTot+=r.conv; convTax+=r.ctax; short+=r.short;
     return {age:r.age, before:r.before, after:Math.max(r.before, r.after), conv:r.conv, ctax:r.ctax, tax:r.tax, room:Math.max(0, top-r.before), rmd:r.rmd, T:r.T, Ro:r.Ro, capped:r.capped};
   });
@@ -2102,10 +2159,10 @@ function rothProject(rows, convert){
 function rothRender(rows){
   if(!$("rcChart")) return;
   const R=S.roth, base=rothProject(rows,false), w=rothProject(rows,true), top=RC_TOPS[+R.top]||RC_TOPS[22];
-  const ret=w.rows.filter(r=>r.age>=S.retireAge);
+  const ret=w.rows.filter(r=>r.age>=hhRet());
   if(!ret.length){ $("rcChart").innerHTML='<p class="note">Set a retirement age within the plan to see conversions.</p>'; return; }
   // The low-income years: taxable income (before any conversion) inside the 12% bracket or lower
-  const low=base.rows.filter(r=>r.age>=S.retireAge && r.before<RC_TOPS[12]).map(r=>r.age), ranges=[];
+  const low=base.rows.filter(r=>r.age>=hhRet() && r.before<RC_TOPS[12]).map(r=>r.age), ranges=[];
   low.forEach(a=>{ const last=ranges[ranges.length-1]; if(last && a===last[1]+1) last[1]=a; else ranges.push([a,a]); });
   $("rcWindow").innerHTML = (ranges.length ? `Your lowest-tax years (taxable income under the ${brkRate(12)}% bracket top): ages ${ranges.map(([a,b])=>a===b?a:a+"–"+b).join(", ")}. ` : "") +
     (w.convTot>0 ? `Suggested: convert about <b>${fmt$(w.convTot/Math.max(1,w.rows.filter(r=>r.conv>0).length))}</b> a year from ${R.from} to ${R.to}.` : "No room to convert with these settings.") +
@@ -2139,7 +2196,7 @@ function rothRender(rows){
     return `<tr><td>${k}</td><td class="num">${fmt$(a)}</td><td class="num">${fmt$(b)}</td><td class="num" style="color:${Math.abs(d)<1?"var(--muted)":good?"var(--good)":"var(--bad)"}">${d>=0?"+":"−"}${fmt$(Math.abs(d))}</td></tr>`; };
   $("rcCmp").innerHTML=`<thead><tr><th></th><th class="num">No conversions</th><th class="num">With conversions</th><th class="num">Change</th></tr></thead><tbody>`+
     row("Tax Deferred at 75", base.T75, w.T75, "lower") + row("First RMD (75)", base.firstRMD, w.firstRMD, "lower") +
-    row(`Income taxes from 75 to ${end}`, base.late, w.late, "lower") + row(`Lifetime income taxes (from ${S.retireAge})`, base.life, w.life, "lower") +
+    row(`Income taxes from 75 to ${end}`, base.late, w.late, "lower") + row(`Lifetime income taxes (from ${hhRet()})`, base.life, w.life, "lower") +
     row(`Roth at ${end} (tax-free)`, base.Rend, w.Rend, "higher") + row(`Tax Deferred at ${end} (taxable)`, base.Tend, w.Tend, "lower") +
     row(`Tax still owed on that Tax Deferred (at ${Math.round(RC_LEFT*100)}%)`, base.Tend*RC_LEFT, w.Tend*RC_LEFT, "lower") +
     `<tr class="tot"><td>Total taxes, including what's left</td><td class="num">${fmt$(base.life+base.Tend*RC_LEFT)}</td><td class="num">${fmt$(w.life+w.Tend*RC_LEFT)}</td>` +
@@ -2171,9 +2228,9 @@ function init(){
     S.holdings.push({acct:a.name,aid,tick:"",desc:"",amt:0,group:HOLD_GROUPS.includes("Foundational")?"Foundational":HOLD_GROUPS[0]}); changed(false); renderHoldings();
     // Put the cursor in the new ticker box
     const rows=[...document.querySelectorAll("#holdTbl tbody tr")].filter(r=>!r.className); const last=rows.find(r=>r.querySelector("input")?.value==="" ); last?.querySelector("input")?.focus(); };
-  $("addInc").onclick=()=>{S.income.push({name:"New income",amt:0,start:S.retireAge,end:S.endAge,infl:true}); renderTables(); changed();};
-  $("linkAll").onclick=()=>{ for(const b of S.budget) if(!NO_LINK.test(b.item||"")){ b.link=true; b.start=+S.retireAge; } renderTables(); changed(); };
-  $("addLine").onclick=()=>{S.budget.push(Object.assign(L("Custom","New expense",0,"Monthly",S.retireAge,S.endAge),{link:true,endLink:true,dt:todayISO()})); renderTables(); changed();};
+  $("addInc").onclick=()=>{S.income.push({name:"New income",amt:0,start:hhRet(),end:S.endAge,infl:true}); renderTables(); changed();};
+  $("linkAll").onclick=()=>{ for(const b of S.budget) if(!NO_LINK.test(b.item||"")){ b.link=true; b.start=hhRet(); } renderTables(); changed(); };
+  $("addLine").onclick=()=>{S.budget.push(Object.assign(L("Custom","New expense",0,"Monthly",hhRet(),S.endAge),{link:true,endLink:true,dt:todayISO()})); renderTables(); changed();};
   $("rerun").onclick=()=>{ seed=(Math.random()*2**31)|0; run(); };
   $("resetBtn").onclick=()=>{ delete $("rebalTbl").dataset.built; if(!confirm("Clear everything back to the blank starting values?")) return; S=clone(DEFAULTS); save(); fillSimple(); renderTables(); run(); };
   $("exportBtn").onclick=async()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), fname="retirement-plan-"+new Date().toISOString().slice(0,10)+".json";
