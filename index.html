@@ -238,7 +238,8 @@ table.brk .from{color:var(--text-2)}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline}
 .warnbox{background:var(--surface-2);border-left:3px solid var(--warn);padding:6px 10px;font-size:13px;border-radius:4px;margin-top:8px}
 .totals{display:flex;justify-content:space-between;font-weight:600;font-size:13px;padding:6px 4px 0}
-.aboutlink{margin-left:auto;flex:none;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--accent);cursor:pointer;text-decoration:underline}
+.toplinks{margin-left:auto;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.aboutlink{flex:none;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--accent);cursor:pointer;text-decoration:underline}
 #about{max-width:520px;width:calc(100% - 32px);border:1px solid var(--border);border-radius:12px;padding:22px 24px 18px;background:var(--surface);color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.25)}
 #about::backdrop{background:rgba(0,0,0,.35)}
 #about h2{margin:0 0 10px;font-size:20px}
@@ -247,6 +248,17 @@ table.brk .from{color:var(--text-2)}
 #about .aboutsig{text-align:right;margin:-6px 8px 14px 0;font-style:italic;font-weight:600;color:var(--text-2)}
 #about .aboutfine{color:var(--text-2);font-size:13px}
 #about .aboutbtns{display:flex;justify-content:flex-end;margin-top:6px}
+#fb{max-width:520px;width:calc(100% - 32px);border:1px solid var(--border);border-radius:12px;padding:22px 24px 18px;background:var(--surface);color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+#fb::backdrop{background:rgba(0,0,0,.35)}
+#fb h2{margin:0 0 8px;font-size:20px}
+#fb p{font-size:14px;line-height:1.5;margin:0 0 12px}
+#fb label{display:block;font-size:13.5px;font-weight:600;margin:0 0 4px}
+#fb textarea,#fb input[type=email]{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);margin-bottom:12px}
+#fb textarea{min-height:130px;resize:vertical}
+#fb .fbfine{color:var(--text-2);font-size:12.5px;margin:-4px 0 12px}
+#fb .fbtrap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+#fb .fbbtns{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+#fb .fbmsg{margin-right:auto;font-size:13px;color:var(--text-2)}
 .sublbl{display:block;font-size:12px;font-weight:400;color:var(--text-2);margin-top:1px}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
 </style>
@@ -259,11 +271,27 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
   <p>Put in your own numbers: what you've saved, what you spend, Social Security, and when you'd like to retire. It plays out thousands of possible markets and shows how often your money lasts.</p>
   <ul>
     <li><b>No sign-in, no account.</b> Just open it and go.</li>
-    <li><b>Your numbers stay with you.</b> They're saved right here in your browser, on your computer. Nobody else can see them, not even me.</li>
+    <li><b>Your numbers stay with you.</b> They're saved right here in your browser, on your computer. Nobody else can see them. The site counts visits anonymously (no cookies, nothing about your plan), and feedback is only sent if you choose to send it.</li>
     <li><b>Keep a backup.</b> Clearing your browser or switching computers will lose them, so every so often click <b>Save a copy</b> at the top of the page. <b>Load a copy</b> brings it back.</li>
   </ul>
+  <p>Ideas, questions, or something that looks wrong? Click <b>Feedback</b> at the top. I read every one.</p>
   <p class="aboutfine">It's a planning tool to learn from, not financial advice. Run the big decisions by a pro.</p>
   <div class="aboutbtns"><button class="btn primary" id="aboutClose" type="button">Got it</button></div>
+</dialog>
+<dialog id="fb" aria-labelledby="fbTtl">
+  <form id="fbForm" method="dialog">
+    <h2 id="fbTtl">Feedback</h2>
+    <p>What's working, what's confusing, what's missing?</p>
+    <label for="fbText">Your feedback</label>
+    <textarea id="fbText" required maxlength="5000"></textarea>
+    <label for="fbEmail">Your email <span style="font-weight:400;color:var(--text-2)">(optional, if you'd like a reply)</span></label>
+    <input id="fbEmail" type="email" maxlength="200" autocomplete="email">
+    <div class="fbtrap" aria-hidden="true"><label for="fbWeb">Leave this empty</label><input id="fbWeb" type="text" tabindex="-1" autocomplete="off"></div>
+    <p class="fbfine">Only what you type here is sent. Your plan's numbers are never included.</p>
+    <div class="fbbtns"><span class="fbmsg" id="fbMsg"></span>
+      <button class="btn" id="fbCancel" type="button">Cancel</button>
+      <button class="btn primary" id="fbSend" type="submit">Send</button></div>
+  </form>
 </dialog>
 <div class="topbar">
 <header>
@@ -276,7 +304,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
       <button class="btn" id="resetBtn" title="Clears everything back to the blank starting values. It asks first, so save a copy before if you want to keep your numbers.">Reset</button>
       <input type="file" id="importFile" accept=".json,application/json" style="display:none">
     </div></div></div>
-  <button class="aboutlink" id="aboutBtn" type="button">About</button>
+  <div class="toplinks"><button class="aboutlink" id="aboutBtn" type="button">About</button><button class="aboutlink" id="fbBtn" type="button">Feedback</button></div>
   <button class="navpct" id="navPct" title="Monte Carlo success rate: click to see the results"><span class="np"><i class="dot"></i><span>–</span></span><small>Monte Carlo<br>success</small></button>
 </header>
 <nav class="tabsbar"><div class="navin" role="tablist">
@@ -479,7 +507,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
         <label class="f">Income from age<input id="rStart" type="number"></label>
         <label class="f">Income through age<input id="rEnd" type="number"></label>
       </div>
-      <p class="note">The rental isn't part of your invested money. Property equity is its value minus the debt still owed on it.</p>
+      <p class="note" id="rNote">Rental property equity is its value minus the debt still owed on it. The rental property equity isn't part of your invested money and isn't used to pay for retirement.</p>
       <label class="optchk"><input type="checkbox" id="rSellOn"> Sell rental and invest the equity</label>
       <div class="optbody rsellopt">
         <div class="grid2">
@@ -501,6 +529,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
       <div class="grid2">
         <label class="f" title="What the home is worth minus what you still owe on it">Home equity<input id="hEquity" class="money"></label>
       </div>
+      <p class="note" id="hKeepNote">The primary home equity isn't part of your invested money and isn't used to pay for retirement.</p>
       <label class="optchk"><input type="checkbox" id="hDown"> Downsize and buy a smaller place</label>
       <label class="optchk"><input type="checkbox" id="hRentOn"> Sell and rent</label>
       <div class="optbody hopt">
@@ -1076,20 +1105,22 @@ function homeUI(){
     if(ob && at && ob.previousElementSibling!==at){ at.after(ob); ob.after(nt); } }
   document.querySelectorAll(".hdownopt").forEach(el=>{ el.style.display = plan==="sell" ? "" : "none"; });
   document.querySelectorAll(".hrentopt").forEach(el=>{ el.style.display = plan==="rent" ? "" : "none"; });
-  if(plan==="keep"){ $("hNote").innerHTML="The home isn't part of your invested money and isn't used to pay for retirement."; return; }
+  // Keeping the home: the note above the boxes shows instead (like the rental's)
+  $("hKeepNote").style.display = plan==="keep" ? "" : "none"; $("hNote").style.display = plan==="keep" ? "none" : "";
+  if(plan==="keep"){ $("hNote").innerHTML=""; return; }
   if(plan==="rent"){
     const net=(+H.equity||0)*(1-(+H.sellCost||0)/100), rent=rentMonthly(), own=ownCostsYear();
     if(document.activeElement!==$("hRent")) $("hRent").value=Math.round(rent).toLocaleString("en-US");
     $("hNote").innerHTML = `At ${H.age}: the sale adds <b>${fmt$(net)}</b> (equity minus ${+H.sellCost||0}% selling costs and taxes) to your savings, invested with the rest. ` +
       `Rent of <b>${fmt$(rent)}</b> a month (${fmt$(rent*12)} a year) starts then, on the Rent line of the Your Spending page, and rises with inflation. ` +
       `The costs of owning stop: Mortgage, Property tax, Home insurance, HOA, Maintenance and Big projects` + (own>0.5?` (about ${fmt$(own)} a year as entered)`:"") + `. ` +
-      `Married couples can usually exclude up to $500,000 of gain from tax ($250,000 if single); put any tax above that in the selling costs %.`;
+      `<br><b>Selling costs and taxes %:</b> include agent and closing costs (often 6–8%), plus any tax on the gain. The gain is the sale price minus what you paid and what you've spent on improvements. Married couples can usually exclude up to $500,000 of gain from tax ($250,000 if single), so many owe none. If yours could be more, ask your tax advisor for an estimate and add it as a % of your equity.`;
     return;
   }
   const net=(+H.equity||0)*(1-(+H.sellCost||0)/100), cash=homeCash();
   $("hNote").innerHTML = `At ${H.age}: sale brings <b>${fmt$(net)}</b> after costs. The new home is bought outright, so your <b>new home equity is ${fmt$(+H.nextHome||0)}</b>, and ` +
     (cash>=0 ? `<b>${fmt$(cash)}</b> goes into your savings.` : `the extra <b>${fmt$(-cash)}</b> comes out of your savings.`) +
-    ` The Mortgage budget line stops at this age, with no rent. Property tax, insurance and upkeep stay as entered, so lower them if the smaller place costs less. Married couples can usually exclude up to $500,000 of gain from tax.`;
+    ` The Mortgage budget line stops at this age, with no rent. Property tax, insurance and upkeep stay as entered, so lower them if the smaller place costs less.<br><b>Selling costs and taxes %:</b> include agent and closing costs (often 6–8%), plus any tax on the gain. The gain is the sale price minus what you paid and what you've spent on improvements. Married couples can usually exclude up to $500,000 of gain from tax ($250,000 if single), so many owe none. If yours could be more, ask your tax advisor for an estimate and add it as a % of your equity.`;
 }
 // Stagflation fields show only when the test is on
 // Ages covered by the bad-start test
@@ -1120,12 +1151,14 @@ function lostDecadeUI(){
     `. Stocks end the decade about <b>${f(tot)}</b> (before inflation), with two crashes: the dot-com bust and 2008. Bonds did well, about ${f(btot)} over the decade. After that, markets are random again. <span style="color:var(--accent)">Blue</span> means the start follows your retirement age.`;
 }
 // Rental sale: show the inputs when it's on, and what the sale adds to savings
-function rentalUI(){
+// The rental note only shows while the rental is kept (neither sale box checked)
+function rNoteUI(){ const n=$("rNote"); if(n) n.style.display = (S.rental.sellOn || (S.dst&&S.dst.on)) ? "none" : ""; }
+function rentalUI(){ rNoteUI();
   const R=S.rental, on=!!R.sellOn; document.querySelectorAll(".rsellopt").forEach(el=>el.style.display=on?"":"none");
   if(!on) return;
   const net=(+R.value||0)*(1-(+R.cost||0)/100);
   $("rSellNote").innerHTML = R.sell==null || R.sell==="" ? "Enter the age to sell." :
-    `At ${R.sell}, the sale adds <b>${fmt$(net)}</b> (equity minus ${+R.cost||0}% selling costs and taxes) to your savings, and the rental income stops.`;
+    `At ${R.sell}, the sale adds <b>${fmt$(net)}</b> (equity minus ${+R.cost||0}% selling costs and taxes) to your savings, and the rental income stops.<br><b>Selling costs and taxes %:</b> include agent and closing costs (often 6–8%), plus the tax on the sale. For a rental that's tax on the gain (the sale price minus what you paid and what you've spent on improvements), plus up to 25% on the depreciation you've taken over the years, and it can add up. Ask your tax advisor for an estimate and add it as a % of your equity.`;
 }
 // Tax Brackets box: editable federal numbers for both filing types
 function brkLabels(){
@@ -1173,7 +1206,7 @@ function brkNote(){
     `They're used by Standard order, Fill the bracket order and the Roth Conversions page. The flat tax option doesn't use them. Social Security's taxable-income thresholds are set by law and aren't adjusted for inflation, so they're not listed here.`;
 }
 // DST: show the inputs when it's on, and explain what the payout is worth over time
-function dstUI(){
+function dstUI(){ rNoteUI();
   const D=S.dst; document.querySelectorAll(".dstopt").forEach(el=>el.style.display=D.on?"":"none");
   if(!D.on) return;
   const g=+D.grow||0, i=+S.market.infl||0, yrs=Math.max(1,+S.endAge-(+D.age)), real=(1+g/100)/(1+i/100);
@@ -1300,7 +1333,7 @@ function renderTables(){
       dropTarget(h, ()=>({cat:b.cat, at:S.budget.findIndex(x=>x.cat===b.cat), into:true})); }
     const tr=document.createElement("tr");
     const amt=moneyInput(b.amt,v=>{ b.amt=v; b.dt=todayISO(); budUndo=null; budInflUI(); if(b.homeLink && S.home.plan==="rent"){ S.home.rentMo=v/(b.per==="Annual"?12:1); homeUI(); } }); amt.style.width="74px";
-    const per=selectInput(["Monthly","Annual"],b.per,v=>b.per=v); per.style.width="74px";
+    const per=selectInput(["Monthly","Annual"],b.per,v=>b.per=v,o=>o==="Annual"?"Yearly":o); per.style.width="96px";  // saved as "Annual", shown as "Yearly"
     const name=textInput(b.item,v=>b.item=v); name.style.minWidth="100px"; name.style.width="100%";
     const hd=td("⠿","drag"); hd.title="Drag to move this line, or drop it in another group";
     hd.addEventListener("mousedown",()=>tr.draggable=true); hd.addEventListener("mouseup",()=>tr.draggable=false);
@@ -2242,6 +2275,23 @@ function init(){
   $("exampleBtn").onclick=()=>{ if(!confirm("Replace your numbers with the example plan? Click Save a copy first if you want to keep yours.")) return; delete $("rebalTbl").dataset.built; S=examplePlan(); save(); fillSimple(); renderTables(); run(); };
   // About: opens from the header link, and once on a first visit (nothing saved yet)
   const ab=$("about"); $("aboutBtn").onclick=()=>ab.showModal(); $("aboutClose").onclick=()=>ab.close();
+  // Feedback: sent to a Google Form (answers land in a Google Sheet). Only the typed text and optional email are sent.
+  const FB_URL="https://docs.google.com/forms/d/e/1FAIpQLScrnBrQ_oEW8sxSat6X96IApfxoLDY5s9JiHEXQppEkPjMwMA/formResponse";
+  const fb=$("fb"), fbMsg=$("fbMsg");
+  $("fbBtn").onclick=()=>{ fbMsg.textContent=""; $("fbSend").disabled=false; fb.showModal(); $("fbText").focus(); };
+  $("fbCancel").onclick=()=>fb.close();
+  fb.addEventListener("click",e=>{ const r=fb.getBoundingClientRect(); if(e.target===fb && (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)) fb.close(); });
+  $("fbForm").addEventListener("submit",async e=>{ e.preventDefault();
+    const text=$("fbText").value.trim(), email=$("fbEmail").value.trim();
+    if(!text){ fbMsg.textContent="Type a few words first."; return; }
+    const done=()=>{ $("fbText").value=""; $("fbEmail").value=""; fbMsg.textContent="Thanks! It's on its way."; setTimeout(()=>fb.close(),1600); };
+    if($("fbWeb").value){ done(); return; }   // filled in by a bot: quietly drop it
+    $("fbSend").disabled=true; fbMsg.textContent="Sending…";
+    try{
+      await fetch(FB_URL,{method:"POST",mode:"no-cors",body:new URLSearchParams({"entry.1603572738":text,"entry.1244525504":email})});
+      done();
+    }catch(err){ $("fbSend").disabled=false; fbMsg.textContent="Couldn't send. Check your internet connection and try again."; }
+  });
   ab.addEventListener("click",e=>{ const r=ab.getBoundingClientRect(); if(e.target===ab && (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)) ab.close(); });
   let seen=true; try{ seen = !!localStorage.getItem(STORE_KEY) || !!localStorage.getItem(STORE_KEY+"-about"); localStorage.setItem(STORE_KEY+"-about","1"); }catch(e){}
   if(!seen) ab.showModal();
@@ -2263,5 +2313,7 @@ function init(){
 }
 init();
 </script>
+<!-- Anonymous visit counter (GoatCounter): no cookies, and nothing from the plan is sent -->
+<script data-goatcounter="https://yourretirementplanner.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
