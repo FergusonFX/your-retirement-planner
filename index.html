@@ -218,6 +218,11 @@ table.brk .from{color:var(--text-2)}
 .pieLeg.wide td.num{white-space:nowrap}
 #holdTbl select.htype{width:auto;margin:4px 0 0;font-weight:400}
 #holdTbl .hgrpname{display:flex;flex-direction:column;align-items:flex-start}
+#holdTbl .hgrphead{display:flex;align-items:flex-start;gap:6px}
+#holdTbl .hfold{flex:none;background:none;border:0;padding:0;width:30px;height:30px;line-height:30px;margin:-5px 0 0 -4px;font-size:26px;color:var(--text-2);cursor:pointer;border-radius:4px;transition:transform .15s}
+#holdTbl .hfold:hover{background:var(--surface-2);color:var(--text)}
+#holdTbl tr.hgrp.closed .hfold{transform:rotate(-90deg)}
+#holdTbl tr.hgrp.closed td{border-bottom-color:transparent}
 #holdTbl .hgrpname .hacct{font-weight:600}
 #holdTbl .hgrpname .htype{font-size:12px;font-weight:400;color:var(--text-2);margin-top:2px}
 #holdTbl .hgrpname select.hlink{width:auto;margin:4px 0 0;font-weight:400}
@@ -1765,12 +1770,17 @@ function linkHoldings(){
   H.forEach(h=>{ if(h.aid===undefined) h.aid=pick[h.acct]||null; });
 }
 // Holdings, grouped by account (largest first). Saved with your settings; not used by the Monte Carlo.
+let holdOrder=null;  // account order in the Holdings list for this visit
 function renderHoldings(){
   linkHoldings();
   const H=S.holdings||(S.holdings=[]), tb=$("holdTbl").querySelector("tbody"); tb.innerHTML="";
   const groups={}; H.forEach(h=>{ const a=acctById(h.aid); if(a) h.acct=a.name; const k=holdKey(h); (groups[k]=groups[k]||[]).push(h); });
   const sum=list=>list.reduce((s,h)=>s+(+h.amt||0),0);
-  const order=Object.keys(groups).sort((a,b)=>sum(groups[b])-sum(groups[a]));
+  // Largest account first when the page opens; after that the order stays put while you edit
+  // (deleting a holding or changing an amount doesn't make an account jump down the list)
+  const keys=Object.keys(groups), bySize=(a,b)=>sum(groups[b])-sum(groups[a]), prev=holdOrder||[];
+  const order=keys.filter(k=>prev.includes(k)).sort((a,b)=>prev.indexOf(a)-prev.indexOf(b)).concat(keys.filter(k=>!prev.includes(k)).sort(bySize));
+  holdOrder=order;
   order.forEach(k=>{
     // Account heading: name and type from the Accounts box (change them there)
     const hr=document.createElement("tr"); hr.className="hgrp";
@@ -1785,7 +1795,20 @@ function renderHoldings(){
       nameBox.append(sel);
     }
     const sub=td("","num"); sub.dataset.acct=k;
-    const c1=td(nameBox); c1.colSpan=3; hr.append(c1, sub, td("")); tb.appendChild(hr);
+    // Arrow: show or hide this account's holdings (the account total always shows)
+    const closedList=S.holdClosed||(S.holdClosed=[]), isClosed=()=>closedList.includes(k);
+    const fold=document.createElement("button"); fold.type="button"; fold.className="hfold"; fold.textContent="▾";
+    const n=groups[k].length, cnt=document.createElement("span"); cnt.className="htype";
+    const paint=()=>{ const c=isClosed(); hr.classList.toggle("closed",c); fold.setAttribute("aria-expanded",!c);
+      fold.title=c?"Show the holdings":"Hide the holdings (keeps the total)"; cnt.textContent=c?`${n} holding${n===1?"":"s"} hidden`:"";
+      cnt.style.display=c?"":"none"; tb.querySelectorAll(`tr[data-hk="${CSS.escape(k)}"]`).forEach(r=>r.style.display=c?"none":""); };
+    const toggle=()=>{ const i=closedList.indexOf(k); if(i>=0) closedList.splice(i,1); else closedList.push(k); paint(); changed(false); };
+    fold.addEventListener("click",toggle);
+    const nm=nameBox.querySelector("span.hacct"); if(nm){ nm.style.cursor="pointer"; nm.addEventListener("click",toggle); }
+    nameBox.append(cnt);
+    const head=document.createElement("div"); head.className="hgrphead"; head.append(fold, nameBox);
+    const c1=td(head); c1.colSpan=3; hr.append(c1, sub, td("")); tb.appendChild(hr);
+    hr._paint=paint;
     groups[k].slice().sort((a,b)=>(+b.amt||0)-(+a.amt||0)).forEach(h=>{
       const tr=document.createElement("tr");
       const tick=textInput(h.tick,v=>h.tick=v); tick.style.width="96px"; if(h.desc) tick.title=h.desc;
@@ -1796,8 +1819,9 @@ function renderHoldings(){
       del.addEventListener("click",()=>{ H.splice(H.indexOf(h),1); changed(false); renderHoldings(); });
       const grp=document.createElement("select"); grp.innerHTML=HOLD_GROUPS.map(g=>`<option value="${g}"${g===h.group?" selected":""}>${gN(g)}</option>`).join("");
       grp.addEventListener("change",()=>{ h.group=grp.value; changed(false); holdTotals(); });
-      tr.append(td(""), td(tick), td(grp), td(amt,"num"), td(del)); tb.appendChild(tr);
+      tr.dataset.hk=k; tr.append(td(""), td(tick), td(grp), td(amt,"num"), td(del)); tb.appendChild(tr);
     });
+    hr._paint();
   });
   const tr=document.createElement("tr"); tr.className="htot"; const c=td("Total"); c.colSpan=3; const t=td("","num"); t.id="holdTotal"; tr.append(c,t,td("")); tb.appendChild(tr);
   // "Add to" list for the + button: every account in the Accounts box
@@ -2258,6 +2282,7 @@ function init(){
   const setHoldTab=id=>{ for(const [t,p] of Object.entries(holdTabs)){ $(t).setAttribute("aria-selected",t===id); $(p).style.display=t===id?"":"none"; } };
   Object.keys(holdTabs).forEach(t=>$(t).onclick=()=>setHoldTab(t));
   $("addHold").onclick=()=>{ const aid=$("holdAcct").value, a=acctById(aid); if(!a) return;
+    if(S.holdClosed) S.holdClosed=S.holdClosed.filter(x=>x!==aid);
     S.holdings.push({acct:a.name,aid,tick:"",desc:"",amt:0,group:HOLD_GROUPS.includes("Foundational")?"Foundational":HOLD_GROUPS[0]}); changed(false); renderHoldings();
     // Put the cursor in the new ticker box
     const rows=[...document.querySelectorAll("#holdTbl tbody tr")].filter(r=>!r.className); const last=rows.find(r=>r.querySelector("input")?.value==="" ); last?.querySelector("input")?.focus(); };
@@ -2265,14 +2290,14 @@ function init(){
   $("linkAll").onclick=()=>{ for(const b of S.budget) if(!NO_LINK.test(b.item||"")){ b.link=true; b.start=hhRet(); } renderTables(); changed(); };
   $("addLine").onclick=()=>{S.budget.push(Object.assign(L("Custom","New expense",0,"Monthly",hhRet(),S.endAge),{link:true,endLink:true,dt:todayISO()})); renderTables(); changed();};
   $("rerun").onclick=()=>{ seed=(Math.random()*2**31)|0; run(); };
-  $("resetBtn").onclick=()=>{ delete $("rebalTbl").dataset.built; if(!confirm("Clear everything back to the blank starting values?")) return; S=clone(DEFAULTS); save(); fillSimple(); renderTables(); run(); };
+  $("resetBtn").onclick=()=>{ delete $("rebalTbl").dataset.built; if(!confirm("Clear everything back to the blank starting values?")) return; S=clone(DEFAULTS); holdOrder=null; save(); fillSimple(); renderTables(); run(); };
   $("exportBtn").onclick=async()=>{ const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}), fname="retirement-plan-"+new Date().toISOString().slice(0,10)+".json";
     // On the published web page, saving goes through the page host (it asks the viewer to confirm)
     const dl = window.claude && window.claude.use ? await window.claude.use("downloads").catch(()=>null) : null;
     if(dl){ try{ await dl.save({filename:fname, data:blob}); }catch(e){ if(e && e.code!=="declined") alert("Couldn't save the file here."); } return; }
     const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
   $("importBtn").onclick=()=>$("importFile").click();
-  $("exampleBtn").onclick=()=>{ if(!confirm("Replace your numbers with the example plan? Click Save a copy first if you want to keep yours.")) return; delete $("rebalTbl").dataset.built; S=examplePlan(); save(); fillSimple(); renderTables(); run(); };
+  $("exampleBtn").onclick=()=>{ if(!confirm("Replace your numbers with the example plan? Click Save a copy first if you want to keep yours.")) return; delete $("rebalTbl").dataset.built; S=examplePlan(); holdOrder=null; save(); fillSimple(); renderTables(); run(); };
   // About: opens from the header link, and once on a first visit (nothing saved yet)
   const ab=$("about"); $("aboutBtn").onclick=()=>ab.showModal(); $("aboutClose").onclick=()=>ab.close();
   // Feedback: sent to a Google Form (answers land in a Google Sheet). Only the typed text and optional email are sent.
@@ -2295,7 +2320,7 @@ function init(){
   ab.addEventListener("click",e=>{ const r=ab.getBoundingClientRect(); if(e.target===ab && (e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)) ab.close(); });
   let seen=true; try{ seen = !!localStorage.getItem(STORE_KEY) || !!localStorage.getItem(STORE_KEY+"-about"); localStorage.setItem(STORE_KEY+"-about","1"); }catch(e){}
   if(!seen) ab.showModal();
-  $("importFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ try{ S=fromSaved(JSON.parse(t)); save(); fillSimple(); renderTables(); run(); }catch(err){ alert("That file couldn't be read."); } }); e.target.value=""; };
+  $("importFile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ try{ S=fromSaved(JSON.parse(t)); holdOrder=null; save(); fillSimple(); renderTables(); run(); }catch(err){ alert("That file couldn't be read."); } }); e.target.value=""; };
   // Top tabs: one page at a time; remembers the last page (and #page links work)
   const pageIds=[...document.querySelectorAll(".ptab")].map(b=>b.dataset.page);
   const showPage=(id,scroll)=>{ if(!pageIds.includes(id)) id=pageIds[0];
