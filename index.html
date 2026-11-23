@@ -476,7 +476,7 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
         <h3 style="margin-top:0">Today</h3>
         <div class="pieWrap" id="holdPieWrap"></div>
         <p class="note">Set each holding's group in the Holdings list tab and the chart updates. The account type columns use each account's type from the Accounts box.</p>
-        <h3 style="margin-top:22px">Target at retirement</h3>
+        <h3 style="margin-top:22px">Target</h3>
         <div class="pieWrap" id="holdTargetWrap"></div>
         <div id="tgtWarn"></div>
         <p class="note" id="holdTargetNote"></p>
@@ -546,12 +546,13 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
         </div>
       </div>
       <p class="note" id="hNote"></p>
-      <h3 class="secgap">Other Income and Pension</h3>
+      <h3 class="secgap">Other Income, Pensions and Deferred Compensation</h3>
       <div class="scroll"><table class="tbl" id="incTbl">
         <thead><tr><th>Source</th><th class="num">Per year</th><th>From</th><th>Through</th><th title="Checked: the amount rises with inflation every year. Unchecked: the same dollar amount every year, so it buys less over time.">Rises w/ inflation</th><th></th></tr></thead><tbody></tbody>
       </table></div>
       <div class="row" style="margin-top:6px"><button class="btn" id="addInc">+ Add income</button></div>
       <p class="note">"Rises with inflation" on: the income keeps its buying power. Off: it pays the same dollar amount every year starting at its first age, so it's worth about <span class="inflPct">2.5</span>% less each year in today's dollars (your inflation setting in Market assumptions).</p>
+      <p class="note">Deferred compensation payouts go here too: enter the yearly payout for the years you'll receive it. For a lump sum, put the full amount in a single year (same From and Through age). It's taxed as regular income.</p>
     </div>
   </details>
 </section>
