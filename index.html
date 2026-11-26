@@ -145,6 +145,9 @@ table{border-collapse:collapse;width:100%}
 #budTbl td.fixnote{font-size:12px;color:var(--muted);padding:0 4px 8px;border-bottom:1px solid var(--grid)}
 #budTbl tr:has(+ tr > td.fixnote) td{border-bottom:none}
 #budTbl th{white-space:normal;line-height:1.2;vertical-align:bottom}
+#budTbl tfoot td{border-top:2px solid var(--grid);border-bottom:none;padding-top:8px;padding-bottom:0;vertical-align:top}
+#budTbl td.budtotage{white-space:nowrap;font-size:13px;color:var(--text-2)}
+#budTbl td.budtotage input{width:54px;margin-left:4px}
 input.ro{background:transparent;border-style:dashed;color:var(--text);font-weight:600;cursor:default}
 input.ro:focus{outline:none}
 input.linked{color:var(--accent);font-weight:600;border-color:var(--accent)}
@@ -591,7 +594,9 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 30px;color:var(--muted);fon
       <div class="scroll"><table class="tbl" id="budTbl">
         <thead><tr><th title="Drag to move a line"></th><th>Item</th><th class="num">Amount</th><th>Per</th><th title="First age (yours) this expense is paid">From age</th><th title="Last age (yours) this expense is paid. It stops after this age.">To age</th><th title="Scales with the spending phase">Phase</th><th title="Goes down or up when a spending guardrail box is checked">Can cut</th><th></th></tr></thead>
         <tbody></tbody>
+        <tfoot><tr><td></td><td><b>Total spending</b></td><td class="num"><b id="budTot"></b></td><td><select id="budTotPer" style="width:96px" aria-label="Show the total per year or per month"><option value="Annual">Yearly</option><option value="Monthly">Monthly</option></select></td><td colspan="5" class="budtotage">at age<input id="budTotAge" type="number" aria-label="Age for the total"></td></tr></tfoot>
       </table></div>
+      <p class="note" id="budTotNote" style="margin-top:-4px;padding-left:18px"></p>
       <div class="row" style="margin-top:6px"><button class="btn" id="addLine">+ Add line</button><button class="btn" id="linkAll" title="Set every From age (except health insurance before Medicare, Medicare and late-life care) to follow the retirement age">Link From ages to retirement age</button></div>
       <p class="note">Drag the <b>⠿</b> handle to move a line up or down, or into another group. <b style="color:var(--accent)">Blue</b> ages are linked: From ages follow your retirement age, and To ages follow the plan's end age, both in Ages and timing. Type a different age to set one by hand, or type the linked age to link it again. Health insurance before Medicare, Medicare and late-life care keep their own ages. Each line is paid every year from the "From age" through the "To age" (your age), then stops. For example, set the mortgage's To age to the year before it's paid off, and stop health insurance before Medicare at 64. Every amount is in today's dollars and keeps pace with inflation, except the mortgage (see the note under it).</p>
       <h3 class="secgap">Spending guardrails</h3>
@@ -1354,6 +1359,33 @@ function renderTables(){
       dropTarget(n, ()=>({cat:b.cat, at:i+1, after:true, row:tr}));
       c.innerHTML=`Fixed payment: stays the same dollar amount every year, and isn't raised by the inflation reminder, so with inflation it costs a little less in today's dollars each year (about <span class="inflPct">${esc(S.market.infl)}</span>% less per year).`; n.appendChild(c); bb.appendChild(n); }
   });
+  budTotalUI();
+}
+
+// ---- Total of the budget lines ----
+// Adds up the lines paid at the age picked (starts at the retirement age), before taxes:
+// phase % on "Phase" lines, the guardrail on "Can cut" lines, and "Scale all spending".
+function budTotalUI(){
+  const cell=$("budTot"), note=$("budTotNote"), sel=$("budTotPer"), ai=$("budTotAge"); if(!cell||!note||!sel||!ai) return;
+  const per=S.budTotPer==="Monthly"?"Monthly":"Annual", div=per==="Monthly"?12:1;
+  sel.value=per; sel.onchange=()=>{ S.budTotPer=sel.value; changed(false); };
+  const ra=typeof hhRet==="function"?hhRet():+S.retireAge, age=(+S.budTotAge>0)?+S.budTotAge:ra;
+  ai.min=S.currentAge; ai.max=S.endAge; ai.title="Pick an age to see the total for that year. It starts at your retirement age.";
+  if(document.activeElement!==ai) ai.value=age;
+  ai.oninput=()=>{ S.budTotAge=num(ai.value); changed(false); };
+  const H=S.home||{}, homeOn=H.plan && H.plan!=="keep", pm=phaseMult(age);
+  const dropped=b=>(homeOn && age>=+H.age && /mortgage/i.test(b.item||"")) || (H.plan==="rent" && age>=+H.age && OWN_RE.test(b.item||""));
+  // Fixed payments (the mortgage) are turned into today's dollars for that year, like the Year by year table
+  const y=Math.max(0,age-S.currentAge), cum=inflCum(Math.max(1,S.endAge-S.currentAge+1)), cy=cum[Math.min(y,cum.length-1)]||1;
+  let tot=0, flex=0, fixedIn=false;
+  for(const b of S.budget){ if(age<b.start || age>b.end || dropped(b)) continue;
+    let a=(+b.amt||0)*(b.per==="Monthly"?12:1); if(b.phase) a*=pm; if(b.fixed && a>0){ a/=cy; fixedIn=true; } tot+=a; if(b.flex) flex+=a; }
+  const sc=(+S.spendScale||100)/100, gm=guardMult(), d=flex*gm*sc; tot*=sc;
+  cell.textContent=fmt$((tot+d)/div);
+  const out=[`At ${age}, before taxes. ${esc(phaseName(age))} phase: "Phase" lines at ${Math.round(pm*100)}%.${fixedIn && y>0?" The mortgage is in today's dollars.":""}`];
+  if(sc!==1) out.push(`Scale all spending ${+S.spendScale}% is applied.`);
+  if(gm){ const G=S.guard; out.push(`<b style="color:var(--text-2)">Guardrail on:</b> "Can cut" lines are ${gm<0?`cut ${+G.cut}%`:`raised ${+G.raise}%`} (${gm<0?"−":"+"}${fmt$(Math.abs(d)/div)}). Without it: ${fmt$(tot/div)}.`); }
+  note.innerHTML=out.join(" ");
 }
 
 // ---- Budget inflation reminder ----
@@ -2269,7 +2301,7 @@ function rothRender(rows){
 
 /* ---------------- Wiring ---------------- */
 let timer=null;
-function changed(rerun=true){ save(); if(!rerun) return; clearTimeout(timer); timer=setTimeout(run,150); }
+function changed(rerun=true){ save(); try{ budTotalUI(); }catch(e){} if(!rerun) return; clearTimeout(timer); timer=setTimeout(run,150); }
 function init(){
   claimOptions(); fillSimple(); bindSimple(); renderTables();
   $("addAcct").onclick=()=>{S.accounts.push({name:"New account",type:"Brokerage",bal:0}); renderTables(); changed();};
